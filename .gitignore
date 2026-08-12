@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+ENV/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+test*.js
+rebuild.py
+replace.py
+fix.py
+update_html.py
+update_worlds.py

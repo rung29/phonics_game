@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 英文發音魔法闖關島 (Phonics Adventure)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Fredoka', 'Comic Sans MS', sans-serif;
+            background-color: #f0fdf4;
+        }
+    </style>
+</head>
+
+<body class="bg-amber-50 text-slate-800 min-h-screen pb-12">
+
+    <div id="app" class="max-w-xl mx-auto px-4 py-6">
+        <header
+            class="flex justify-between items-center mb-6 bg-white p-4 rounded-3xl shadow-md border-4 border-amber-300">
+            <div>
+                <h1 class="text-2xl font-bold text-amber-600">✨ 發音魔法冒險</h1>
+                <p class="text-sm text-amber-800">Short & Long Vowel 探索之旅</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">⭐ {{ score }}</span>
+                <button @click="showParentModal = true"
+                    class="bg-amber-100 p-2 rounded-full hover:bg-amber-200 text-sm">⚙️ 家長區</button>
+            </div>
+        </header>
+
+        <div v-if="currentStage === 'menu'" class="space-y-4">
+            <h2 class="text-2xl font-bold text-center text-emerald-700 mb-4">選擇你要挑戰的冒險島嶼</h2>
+
+            <div v-for="level in levels" :key="level.id" @click="startLevel(level)"
+                class="bg-white p-5 rounded-3xl shadow-lg border-4 hover:scale-105 transition duration-200 cursor-pointer flex items-center space-x-4"
+                :class="level.borderColor">
+                <div class="text-4xl">{{ level.icon }}</div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold" :class="level.textColor">{{ level.title }}</h3>
+                    <p class="text-sm text-gray-500">{{ level.description }}</p>
+                    <span
+                        class="inline-block mt-2 text-sm bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-bold">
+                        規則：{{ level.ruleTag }}
+                    </span>
+                </div>
+                <div class="text-emerald-500 font-bold text-lg">挑戰 ➔</div>
+            </div>
+        </div>
+
+        <div v-else-if="currentStage === 'game'"
+            class="bg-white p-6 rounded-3xl shadow-xl border-4 border-amber-300 relative">
+            <button @click="currentStage = 'menu'"
+                class="text-sm text-slate-400 hover:text-slate-600 mb-4 flex items-center">
+                ⬅️ 返回關卡選單
+            </button>
+
+            <div class="mb-6 text-center">
+                <span class="bg-amber-100 text-amber-800 text-sm px-4 py-1.5 rounded-full font-bold">
+                    {{ activeLevel.title }} ({{ currentWordIndex + 1 }}/{{ activeLevel.words.length }})
+                </span>
+                <h3 class="text-2xl font-bold mt-2 text-slate-700">{{ currentWord.prompt }}</h3>
+                <p class="text-base text-emerald-600 font-bold mt-2">💡 規則小貼士：{{ currentWord.hint }}</p>
+            </div>
+
+            <div class="flex justify-center mb-6">
+                <button @click="speak(currentWord.target)"
+                    class="bg-amber-400 hover:bg-amber-500 text-white font-bold p-6 rounded-full shadow-lg text-3xl animate-bounce">
+                    🔊 點我聽發音
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <button v-for="option in currentWord.options" :key="option.text" @click="checkAnswer(option)"
+                    class="p-5 rounded-2xl border-4 font-bold text-2xl shadow-md transition text-center"
+                    :class="getOptionClass(option)">
+                    <div class="text-3xl mb-1" v-if="option.type === 'short' || option.type === 'long'">{{ option.type
+                        === 'short' ? '🐣' : '🧙‍♂️' }}</div>
+                    <div class="text-3xl mb-1" v-else-if="option.type === 'silent'">🤫</div>
+                    <div class="text-3xl mb-1" v-else-if="option.type === 'th'">🗣️</div>
+                    <div class="text-3xl mb-1" v-else-if="option.type === 'syllable'">✂️</div>
+                    <div>{{ option.text }}</div>
+                    <div class="text-sm text-gray-400 mt-1" v-if="option.vowelType">({{ option.vowelType }})</div>
+                </button>
+            </div>
+
+            <div v-if="feedback" class="text-center font-bold text-xl p-4 rounded-2xl mb-4"
+                :class="feedback.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'">
+                {{ feedback.message }}
+            </div>
+
+            <div v-if="showMicBonus" class="bg-amber-50 border-2 border-amber-300 p-4 rounded-2xl text-center">
+                <p class="text-amber-800 font-bold text-lg mb-2">⭐ 麥克風語音加分題！大聲念出來：</p>
+                <div class="text-3xl font-bold text-amber-600 mb-3">{{ currentWord.target }}</div>
+
+                <div class="flex justify-center space-x-3">
+                    <button @click="startVoiceRecognition"
+                        class="bg-emerald-500 text-white px-5 py-3 rounded-xl text-base font-bold shadow hover:bg-emerald-600">
+                        🎤 {{ isRecording ? '正在聆聽中...' : '按住念單字' }}
+                    </button>
+                    <button @click="nextWord"
+                        class="bg-slate-200 text-slate-600 px-5 py-3 rounded-xl text-base font-bold hover:bg-slate-300">
+                        跳過 ➔
+                    </button>
+                </div>
+                <p v-if="micResult" class="text-base mt-2 font-bold"
+                    :class="micResult.isMatch ? 'text-emerald-600' : 'text-amber-600'">
+                    {{ micResult.text }}
+                </p>
+            </div>
+
+            <button v-if="feedback && feedback.isCorrect && !showMicBonus" @click="nextWord"
+                class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-2xl shadow-md text-lg">
+                下一題 ➔
+            </button>
+        </div>
+
+        <div v-if="showParentModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+                <h3 class="text-xl font-bold text-slate-800">⚙️ 家長區：自訂擴充單字</h3>
+                <p class="text-sm text-slate-500">您可以在此檢視或擴充短母音與長母音的題目卡片。</p>
+
+                <div class="space-y-2 mt-4 border-t pt-4 border-b pb-4">
+                    <label class="block text-sm font-bold text-slate-700">線上 JSON 題庫網址：</label>
+                    <input v-model="syncUrl" type="text" placeholder="https://..."
+                        class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    <button @click="syncOnlineData" :disabled="syncLoading"
+                        class="w-full bg-emerald-500 text-white font-bold py-2 rounded-xl hover:bg-emerald-600 disabled:opacity-50">
+                        {{ syncLoading ? '載入中...' : '🔄 更新擴充字庫' }}
+                    </button>
+                    <p v-if="syncMessage" class="text-xs font-bold"
+                        :class="syncMessage.type === 'error' ? 'text-rose-500' : 'text-emerald-600'">{{ syncMessage.text
+                        }}</p>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-xl max-h-40 overflow-y-auto text-sm space-y-2 mt-4">
+                    <div v-for="(word, idx) in activeLevel?.words || []" :key="idx"
+                        class="flex justify-between border-b pb-1">
+                        <span class="font-bold">{{ word.target }}</span>
+                        <span class="text-gray-500">{{ word.hint }}</span>
+                    </div>
+                </div>
+
+                <button @click="showParentModal = false"
+                    class="w-full bg-slate-800 text-white py-2 rounded-xl font-bold">
+                    關閉選單
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue;
+
+        createApp({
+            setup() {
+                const score = ref(0);
+                const currentStage = ref('menu'); // 'menu' | 'game'
+                const activeLevel = ref(null);
+                const currentWordIndex = ref(0);
+                const selectedOption = ref(null);
+                const feedback = ref(null);
+                const showMicBonus = ref(false);
+                const isRecording = ref(false);
+                const micResult = ref(null);
+                const showParentModal = ref(false);
+
+                const syncUrl = ref('');
+                const syncLoading = ref(false);
+                const syncMessage = ref(null);
+
+                // 關卡與短長母音單字資料庫 (限定最多 2 母音發音)
+                const levels = ref([
+                    {
+                        "id": "short-vowel",
+                        "title": "1. 短母音小鎮 (CVC)",
+                        "icon": "🐣",
+                        "description": "母音被關起來了，試著找出發短音的單字！",
+                        "ruleTag": "Short Vowels (CVC)",
+                        "borderColor": "border-emerald-300",
+                        "textColor": "text-emerald-600",
+                        "words": [
+                            {
+                                "prompt": "哪一個是短母音 /æ/ 的「貓咪」？",
+                                "target": "cat",
+                                "hint": "CVC 閉音節，a 發短音 /æ/",
+                                "options": [
+                                    {
+                                        "text": "cat",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short A",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "cape",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long A",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "聽到發音，選出短母音 /ɪ/ 的「大頭針」：",
+                                "target": "pin",
+                                "hint": "i 被閉合在中間，發短音 /ɪ/",
+                                "options": [
+                                    {
+                                        "text": "pine",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long I",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "pin",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short I",
+                                        correct: true
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "選出發短母音 /ɑ/ 的「狗」：",
+                                "target": "dog",
+                                "hint": "o 發短音 /ɑ/",
+                                "options": [
+                                    {
+                                        "text": "dog",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short O",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "boat",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long O",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "選出短母音 /ɛ/ 的「床」：",
+                                "target": "bed",
+                                "hint": "e 發短音 /ɛ/",
+                                "options": [
+                                    {
+                                        "text": "bead",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long E",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "bed",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short E",
+                                        correct: true
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "選出短母音 /ʌ/ 的「杯子」：",
+                                "target": "cup",
+                                "hint": "u 發短音 /ʌ/",
+                                "options": [
+                                    {
+                                        "text": "cup",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short U",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "cube",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long U",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "選出短母音 /ɪ/ 的「豬」：",
+                                "target": "pig",
+                                "hint": "i 發短音 /ɪ/",
+                                "options": [
+                                    {
+                                        "text": "pig",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short I",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "page",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long A",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "選出短母音 /æ/ 的「地圖」：",
+                                "target": "map",
+                                "hint": "a 發短音 /æ/",
+                                "options": [
+                                    {
+                                        "text": "map",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short A",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "make",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long A",
+                                        correct: false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "magic-e",
+                        "title": "2. Magic E 魔法森林",
+                        "icon": "🧙‍♂️",
+                        "description": "字尾加上 Magic E，短母音會變身成字母本尊長音！",
+                        "ruleTag": "Short -> Long Vowel (CVCe)",
+                        "borderColor": "border-purple-300",
+                        "textColor": "text-purple-600",
+                        "words": [
+                            {
+                                "prompt": "加上 Magic E 後，從 tap (短音) 變成了？",
+                                "target": "tape",
+                                "hint": "Magic E 將力量傳給前面的 a，發長音 /eɪ/",
+                                "options": [
+                                    {
+                                        "text": "tap",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short A",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "tape",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long A",
+                                        correct: true
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "哪一個字有魔法 E，讓母音發長音 /oʊ/？",
+                                "target": "hope",
+                                "hint": "Silent E 不發音，前面 o 發字母本尊音",
+                                "options": [
+                                    {
+                                        "text": "hope",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long O",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "hop",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short O",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "哪一個是發長音 /juː/ 的「方塊」？",
+                                "target": "cube",
+                                "hint": "Magic E 讓 u 發長音 /juː/",
+                                "options": [
+                                    {
+                                        "text": "cub",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short U",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "cube",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long U",
+                                        correct: true
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "找出有 Magic E 發長音 /aɪ/ 的「躲藏」：",
+                                "target": "hide",
+                                "hint": "Magic E 讓 i 發長音 /aɪ/",
+                                "options": [
+                                    {
+                                        "text": "hide",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long I",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "hid",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short I",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "哪個是發長音 /oʊ/ 的「筆記」？",
+                                "target": "note",
+                                "hint": "Magic E 讓 o 發長音 /oʊ/",
+                                "options": [
+                                    {
+                                        "text": "not",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short O",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "note",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long O",
+                                        correct: true
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "哪個是發長音 /eɪ/ 的「相同」？",
+                                "target": "same",
+                                "hint": "Magic E 讓 a 發長音 /eɪ/",
+                                "options": [
+                                    {
+                                        "text": "same",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long A",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "Sam",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short A",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "哪個是發長音 /aɪ/ 的「風箏」？",
+                                "target": "kite",
+                                "hint": "Magic E 讓 i 發長音 /aɪ/",
+                                "options": [
+                                    {
+                                        "text": "kit",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short I",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "kite",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long I",
+                                        correct: true
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "vowel-teams",
+                        "title": "3. 雙母音長音隊 (Vowel Teams)",
+                        "icon": "⛵",
+                        "description": "兩個母音走在一起，第一個發本尊長音！",
+                        "ruleTag": "Long Vowels (ai, oa, ee)",
+                        "borderColor": "border-blue-300",
+                        "textColor": "text-blue-600",
+                        "words": [
+                            {
+                                "prompt": "選出包含雙母音長音 /oʊ/ 的「小船」：",
+                                "target": "boat",
+                                "hint": "oa 組合：第一個字母 o 發長音，a 不發音",
+                                "options": [
+                                    {
+                                        "text": "boat",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long O (oa)",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "bat",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short A",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "選出雙母音 ai 發長音 /eɪ/ 的「下雨」：",
+                                "target": "rain",
+                                "hint": "ai 組合：a 發長音，i 不發音",
+                                "options": [
+                                    {
+                                        "text": "ran",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short A",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "rain",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long A (ai)",
+                                        correct: true
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "選出雙母音 ee 發長音 /iː/ 的「樹」：",
+                                "target": "tree",
+                                "hint": "ee 組合：e 發長音",
+                                "options": [
+                                    {
+                                        "text": "tree",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long E (ee)",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "try",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long I",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "選出 ow 發長音 /oʊ/ 的「雪」：",
+                                "target": "snow",
+                                "hint": "ow 在字尾常發長音 /oʊ/",
+                                "options": [
+                                    {
+                                        "text": "snob",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short O",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "snow",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long O (ow)",
+                                        correct: true
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "選出 ie 發長音 /aɪ/ 的「派」：",
+                                "target": "pie",
+                                "hint": "ie 組合：i 發長音，e 不發音",
+                                "options": [
+                                    {
+                                        "text": "pie",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long I (ie)",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "pin",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short I",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "選出 ea 發長音 /iː/ 的「座位」：",
+                                "target": "seat",
+                                "hint": "ea 組合：e 發長音，a 不發音",
+                                "options": [
+                                    {
+                                        "text": "sat",
+                                        "type": "short",
+                                        "vowelType": "短母音 Short A",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "seat",
+                                        "type": "long",
+                                        "vowelType": "長母音 Long E (ea)",
+                                        correct: true
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "world-3-silent-th",
+                        "title": "4. 特務子音洞窟 (Silent/Th)",
+                        "icon": "🕵️",
+                        "description": "找出睡著不發音的特務字母，並分辨 Th 是有聲還無聲！",
+                        "ruleTag": "Silent Letters & Th",
+                        "borderColor": "border-slate-400",
+                        "textColor": "text-slate-700",
+                        "words": [
+                            {
+                                "prompt": "找出單字「knee」中睡著不發音的字母：",
+                                "target": "knee",
+                                "hint": "kn 開頭時，k 通常不發音",
+                                "options": [
+                                    {
+                                        "text": "k",
+                                        "type": "silent",
+                                        "vowelType": "不發音",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "n",
+                                        "type": "silent",
+                                        "vowelType": "發音字母",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "e",
+                                        "type": "silent",
+                                        "vowelType": "發音字母",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "找出單字「knife」中睡著不發音的字母：",
+                                "target": "knife",
+                                "hint": "kn 開頭，k 不發音",
+                                "options": [
+                                    {
+                                        "text": "k",
+                                        "type": "silent",
+                                        "vowelType": "不發音",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "n",
+                                        "type": "silent",
+                                        "vowelType": "發音字母",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "f",
+                                        "type": "silent",
+                                        "vowelType": "發音字母",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "找出單字「write」中睡著不發音的字母：",
+                                "target": "write",
+                                "hint": "wr 開頭，w 不發音",
+                                "options": [
+                                    {
+                                        "text": "w",
+                                        "type": "silent",
+                                        "vowelType": "不發音",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "r",
+                                        "type": "silent",
+                                        "vowelType": "發音字母",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "t",
+                                        "type": "silent",
+                                        "vowelType": "發音字母",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "找出單字「climb」中睡著不發音的字母：",
+                                "target": "climb",
+                                "hint": "mb 結尾時，b 通常不發音",
+                                "options": [
+                                    {
+                                        "text": "m",
+                                        "type": "silent",
+                                        "vowelType": "發音字母",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "b",
+                                        "type": "silent",
+                                        "vowelType": "不發音",
+                                        correct: true
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "聽音辨別，單字「think」的 th 是：",
+                                "target": "think",
+                                "hint": "think 只有純噴氣，喉嚨不震動喔",
+                                "options": [
+                                    {
+                                        "text": "純噴氣 (Unvoiced)",
+                                        "type": "th",
+                                        "vowelType": "無聲子音",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "喉嚨震動 (Voiced)",
+                                        "type": "th",
+                                        "vowelType": "有聲子音",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "聽音辨別，單字「this」的 th 是：",
+                                "target": "this",
+                                "hint": "this 會震動喉嚨喔",
+                                "options": [
+                                    {
+                                        "text": "純噴氣 (Unvoiced)",
+                                        "type": "th",
+                                        "vowelType": "無聲子音",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "喉嚨震動 (Voiced)",
+                                        "type": "th",
+                                        "vowelType": "有聲子音",
+                                        correct: true
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "world-4-syllables",
+                        "title": "5. 音節解構城堡",
+                        "icon": "🏰",
+                        "description": "利用手術刀將單字切開，並算出單字的音節數！",
+                        "ruleTag": "Syllables Cutting & Counting",
+                        "borderColor": "border-pink-300",
+                        "textColor": "text-pink-600",
+                        "words": [
+                            {
+                                "prompt": "「cape」有幾個母音發音 (音節)？",
+                                "target": "cape",
+                                "hint": "Magic E 的 e 不發音，只有 a 發長音",
+                                "options": [
+                                    {
+                                        "text": "1 音節",
+                                        "type": "syllable",
+                                        "vowelType": "單音節",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "2 音節",
+                                        "type": "syllable",
+                                        "vowelType": "雙音節",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "「tiger」有幾個母音發音 (音節)？",
+                                "target": "tiger",
+                                "hint": "i 跟 er 都有發出母音的聲音",
+                                "options": [
+                                    {
+                                        "text": "1 音節",
+                                        "type": "syllable",
+                                        "vowelType": "單音節",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "2 音節",
+                                        "type": "syllable",
+                                        "vowelType": "雙音節",
+                                        correct: true
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "「kitten」有幾個母音發音 (音節)？",
+                                "target": "kitten",
+                                "hint": "i 跟 e 都有發出母音的聲音",
+                                "options": [
+                                    {
+                                        "text": "1 音節",
+                                        "type": "syllable",
+                                        "vowelType": "單音節",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "2 音節",
+                                        "type": "syllable",
+                                        "vowelType": "雙音節",
+                                        correct: true
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "選出正確的手術刀切法 (tiger)：",
+                                "target": "tiger",
+                                "hint": "tiger 的 i 發長音 (開音節)，所以切在母音 i 後面",
+                                "options": [
+                                    {
+                                        "text": "ti - ger",
+                                        "type": "syllable",
+                                        "vowelType": "開音節 + 音節",
+                                        correct: true
+                                    },
+                                    {
+                                        "text": "tig - er",
+                                        "type": "syllable",
+                                        "vowelType": "閉音節 + 音節",
+                                        correct: false
+                                    }
+                                ]
+                            },
+                            {
+                                "prompt": "選出正確的手術刀切法 (kitten)：",
+                                "target": "kitten",
+                                "hint": "kitten 的 i 發短音 (閉音節)，所以切在子音 t 後面",
+                                "options": [
+                                    {
+                                        "text": "ki - tten",
+                                        "type": "syllable",
+                                        "vowelType": "開音節 + 音節",
+                                        correct: false
+                                    },
+                                    {
+                                        "text": "kit - ten",
+                                        "type": "syllable",
+                                        "vowelType": "閉音節 + 音節",
+                                        correct: true
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]);
+
+                const currentWord = computed(() => activeLevel.value?.words[currentWordIndex.value]);
+
+                const startLevel = (level) => {
+                    activeLevel.value = level;
+                    currentWordIndex.value = 0;
+                    currentStage.value = 'game';
+                    resetTurn();
+                };
+
+                const resetTurn = () => {
+                    selectedOption.value = null;
+                    feedback.value = null;
+                    showMicBonus.value = false;
+                    micResult.value = null;
+                };
+
+                // TTS 播放發音
+                const speak = (text) => {
+                    if ('speechSynthesis' in window) {
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.lang = 'en-US';
+                        utterance.rate = 0.8; // 稍微放慢速度適合小朋友
+                        window.speechSynthesis.speak(utterance);
+                    }
+                };
+
+                // 答題判斷
+                const checkAnswer = (option) => {
+                    selectedOption.value = option;
+                    speak(option.text);
+
+                    if (option.correct) {
+                        feedback.value = { isCorrect: true, message: '🎉 太棒了！答對了！' };
+                        score.value += 10;
+                        showMicBonus.value = true; // 觸發語音加分題
+                    } else {
+                        feedback.value = { isCorrect: false, message: '❌ 再試一次看看喔！注意看是長音還是短音。' };
+                    }
+                };
+
+                const getOptionClass = (option) => {
+                    if (!selectedOption.value) return 'border-slate-200 bg-white hover:bg-amber-50';
+                    if (option === selectedOption.value) {
+                        return option.correct ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-rose-500 bg-rose-50 text-rose-700';
+                    }
+                    return 'border-slate-100 opacity-50';
+                };
+
+                const nextWord = () => {
+                    if (currentWordIndex.value < activeLevel.value.words.length - 1) {
+                        currentWordIndex.value++;
+                        resetTurn();
+                    } else {
+                        alert('🏆 恭喜您通關此島嶼！獲得獎勵星星！');
+                        currentStage.value = 'menu';
+                    }
+                };
+
+                // Web Speech API 語音辨識加分
+                const startVoiceRecognition = () => {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    if (!SpeechRecognition) {
+                        alert('您的瀏覽器不支援麥克風辨識，已為您跳過此加分題！');
+                        nextWord();
+                        return;
+                    }
+
+                    const recognition = new SpeechRecognition();
+                    recognition.lang = 'en-US';
+                    recognition.interimResults = false;
+
+                    isRecording.value = true;
+                    micResult.value = null;
+
+                    recognition.start();
+
+                    recognition.onresult = (event) => {
+                        const spokenText = event.results[0][0].transcript.toLowerCase().trim();
+                        const targetText = currentWord.value.target.toLowerCase();
+                        isRecording.value = false;
+
+                        if (spokenText.includes(targetText) || targetText.includes(spokenText)) {
+                            micResult.value = { isMatch: true, text: `🌟 發音超標準！聽到了「${spokenText}」，額外 +5 分！` };
+                            score.value += 5;
+                        } else {
+                            micResult.value = { isMatch: false, text: `😅 聽到的是「${spokenText}」，再接再勵！` };
+                        }
+                    };
+
+                    recognition.onerror = () => {
+                        isRecording.value = false;
+                        micResult.value = { isMatch: false, text: '收音沒聽清楚，可以再試一次或點跳過喔！' };
+                    };
+                };
+
+                // 將 Google 網址轉換為可直接存取的網址
+                const convertGoogleUrl = (url) => {
+                    // Google Sheets：支援分享連結與 edit/pubhtml 等格式
+                    const sheetsMatch = url.match(/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+                    if (sheetsMatch) {
+                        const sheetId = sheetsMatch[1];
+                        // 取出 gid（分頁 ID），預設為 0
+                        const gidMatch = url.match(/gid=(\d+)/);
+                        const gid = gidMatch ? gidMatch[1] : '0';
+                        return { type: 'sheets', url: `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}` };
+                    }
+                    // Google Drive：支援 /file/d/ID 和 ?id=ID 兩種格式
+                    const driveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+                        url.match(/drive\.google\.com\/.*[?&]id=([a-zA-Z0-9_-]+)/);
+                    if (driveMatch) {
+                        const fileId = driveMatch[1];
+                        return { type: 'json', url: `https://drive.google.com/uc?export=download&id=${fileId}` };
+                    }
+                    // 一般網址，直接使用
+                    return { type: 'json', url };
+                };
+
+                // 解析 Google Sheets CSV 為關卡資料陣列
+                // 表格欄位格式：level_id | prompt | target | hint | option_text | option_type | option_vowelType | correct
+                const parseCsvToLevels = (csvText) => {
+                    const lines = csvText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                    if (lines.length < 2) throw new Error('CSV 至少需要標題列和一列資料');
+
+                    // 解析 CSV 列（處理含逗號的引號欄位）
+                    const parseCsvLine = (line) => {
+                        const result = [];
+                        let current = '';
+                        let inQuotes = false;
+                        for (let i = 0; i < line.length; i++) {
+                            if (line[i] === '"') {
+                                if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+                                else { inQuotes = !inQuotes; }
+                            } else if (line[i] === ',' && !inQuotes) {
+                                result.push(current.trim());
+                                current = '';
+                            } else {
+                                current += line[i];
+                            }
+                        }
+                        result.push(current.trim());
+                        return result;
+                    };
+
+                    const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase().replace(/\s+/g, '_'));
+                    const iLevel = headers.indexOf('level_id');
+                    const iPrompt = headers.indexOf('prompt');
+                    const iTarget = headers.indexOf('target');
+                    const iHint = headers.indexOf('hint');
+                    const iOptText = headers.indexOf('option_text');
+                    const iOptType = headers.indexOf('option_type');
+                    const iOptVowel = headers.indexOf('option_voweltype');
+                    const iCorrect = headers.indexOf('correct');
+
+                    if (iLevel === -1 || iTarget === -1 || iOptText === -1 || iCorrect === -1) {
+                        throw new Error('CSV 缺少必要欄位：level_id, target, option_text, correct');
+                    }
+
+                    // 依 level_id + target 分組
+                    const levelMap = {};
+                    const wordMap = {};
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const cols = parseCsvLine(lines[i]);
+                        const levelId = cols[iLevel] || '';
+                        const target = cols[iTarget] || '';
+                        const key = `${levelId}::${target}`;
+
+                        if (!levelId || !target) continue;
+
+                        if (!levelMap[levelId]) levelMap[levelId] = [];
+
+                        if (!wordMap[key]) {
+                            const word = {
+                                prompt: cols[iPrompt] || `選出「${target}」：`,
+                                target: target,
+                                hint: cols[iHint] || '',
+                                options: []
+                            };
+                            wordMap[key] = word;
+                            levelMap[levelId].push(word);
+                        }
+
+                        wordMap[key].options.push({
+                            text: cols[iOptText] || '',
+                            type: cols[iOptType] || 'short',
+                            vowelType: cols[iOptVowel] || '',
+                            correct: (cols[iCorrect] || '').toLowerCase() === 'true'
+                        });
+                    }
+
+                    return Object.entries(levelMap).map(([id, words]) => ({ id, words }));
+                };
+
+                const syncOnlineData = async () => {
+                    if (!syncUrl.value) {
+                        syncMessage.value = { type: 'error', text: '請輸入有效的網址' };
+                        return;
+                    }
+                    syncLoading.value = true;
+                    syncMessage.value = null;
+                    try {
+                        const { type, url } = convertGoogleUrl(syncUrl.value.trim());
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                        let data;
+                        if (type === 'sheets') {
+                            // Google Sheets → 解析 CSV
+                            const csvText = await response.text();
+                            data = parseCsvToLevels(csvText);
+                        } else {
+                            // JSON 檔案（Google Drive 或一般網址）
+                            const text = await response.text();
+                            data = JSON.parse(text);
+                        }
+
+                        if (Array.isArray(data)) {
+                            let addedWords = 0;
+                            let newLevels = 0;
+                            data.forEach(newLevel => {
+                                const existing = levels.value.find(l => l.id === newLevel.id);
+                                if (existing && newLevel.words) {
+                                    existing.words.push(...newLevel.words);
+                                    addedWords += newLevel.words.length;
+                                } else if (!existing) {
+                                    levels.value.push(newLevel);
+                                    newLevels++;
+                                    addedWords += (newLevel.words || []).length;
+                                }
+                            });
+                            syncMessage.value = { type: 'success', text: `✅ 字庫擴充成功！新增 ${addedWords} 題${newLevels > 0 ? `，${newLevels} 個新關卡` : ''}` };
+                            syncUrl.value = '';
+                        } else {
+                            throw new Error('資料格式不正確，應為關卡陣列');
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        syncMessage.value = { type: 'error', text: `讀取失敗：${error.message}。請確認網址正確，且檔案已設為「知道連結的人都能查看」。` };
+                    } finally {
+                        syncLoading.value = false;
+                    }
+                };
+
+                return {
+                    syncUrl,
+                    syncLoading,
+                    syncMessage,
+                    syncOnlineData,
+                    score,
+                    currentStage,
+                    levels,
+                    activeLevel,
+                    currentWordIndex,
+                    currentWord,
+                    selectedOption,
+                    feedback,
+                    showMicBonus,
+                    isRecording,
+                    micResult,
+                    showParentModal,
+                    startLevel,
+                    speak,
+                    checkAnswer,
+                    getOptionClass,
+                    nextWord,
+                    startVoiceRecognition
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>
