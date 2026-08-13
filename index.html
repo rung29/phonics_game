@@ -11,148 +11,214 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-
         body {
             font-family: 'Fredoka', 'Comic Sans MS', sans-serif;
-            background-color: #f0fdf4;
+            background: linear-gradient(135deg, #fef9c3 0%, #f0fdf4 50%, #ecfeff 100%);
+        }
+
+        /* 泡泡風 3D 陰影與按鈕 */
+        .bubble-card {
+            border-bottom-width: 8px !important;
+            transition: all 0.2s ease;
+        }
+
+        .bubble-btn {
+            border-bottom-width: 6px !important;
+            transition: all 0.1s ease;
+        }
+        .bubble-btn:active {
+            transform: translateY(4px);
+            border-bottom-width: 2px !important;
+            margin-bottom: 4px;
+        }
+
+        /* 可愛微漂浮動畫 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-6px) rotate(1deg); }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        /* 可愛搖擺動畫 */
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+        .animate-wiggle:hover {
+            animation: wiggle 0.3s ease-in-out infinite;
         }
     </style>
 </head>
 
-<body class="bg-amber-50 text-slate-800 min-h-screen pb-12">
+<body class="text-slate-700 min-h-screen pb-12">
 
-    <div id="app" class="max-w-xl mx-auto px-4 py-6">
+    <div id="app" class="max-w-xl mx-auto px-4 py-8">
+        <!-- 頂部導覽列 (可愛雲朵風) -->
         <header
-            class="flex justify-between items-center mb-6 bg-white p-4 rounded-3xl shadow-md border-4 border-amber-300">
-            <div>
-                <h1 class="text-2xl font-bold text-amber-600">✨ 發音魔法冒險</h1>
-                <p class="text-sm text-amber-800">Short & Long Vowel 探索之旅</p>
-            </div>
+            class="flex justify-between items-center mb-8 bg-white p-4 rounded-3xl shadow-lg border-4 border-amber-300 bubble-card animate-float">
             <div class="flex items-center space-x-2">
-                <span class="text-2xl">⭐ {{ score }}</span>
+                <span class="text-3xl">🔮</span>
+                <div>
+                    <h1 class="text-2xl font-bold bg-gradient-to-r from-amber-500 to-emerald-500 bg-clip-text text-transparent">發音魔法冒險</h1>
+                    <p class="text-xs text-amber-600 font-bold">Short & Long Vowels</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div class="bg-amber-100 px-4 py-2 rounded-full border-2 border-amber-300 font-bold text-amber-800 text-lg shadow-sm flex items-center space-x-1">
+                    <span>⭐</span>
+                    <span>{{ score }}</span>
+                </div>
                 <button @click="showParentModal = true"
-                    class="bg-amber-100 p-2 rounded-full hover:bg-amber-200 text-sm">⚙️ 家長區</button>
+                    class="bg-rose-100 hover:bg-rose-200 text-rose-600 border-2 border-rose-300 px-3 py-2 rounded-2xl font-bold text-sm transition bubble-btn">
+                    ⚙️ 家長區
+                </button>
             </div>
         </header>
 
-        <div v-if="currentStage === 'menu'" class="space-y-4">
-            <h2 class="text-2xl font-bold text-center text-emerald-700 mb-4">選擇你要挑戰的冒險島嶼</h2>
+        <!-- 主選單：選擇關卡 -->
+        <div v-if="currentStage === 'menu'" class="space-y-5">
+            <h2 class="text-2xl font-bold text-center text-emerald-800 mb-6 flex items-center justify-center space-x-2">
+                <span>🌴</span> <span>選擇你的冒險島嶼</span> <span>🌴</span>
+            </h2>
 
             <div v-for="level in levels" :key="level.id" @click="startLevel(level)"
-                class="bg-white p-5 rounded-3xl shadow-lg border-4 hover:scale-105 transition duration-200 cursor-pointer flex items-center space-x-4"
-                :class="level.borderColor">
-                <div class="text-4xl">{{ level.icon }}</div>
+                class="bg-white p-5 rounded-3xl shadow-md border-4 cursor-pointer flex items-center space-x-4 bubble-card hover:scale-102 hover:-translate-y-1 active:translate-y-0"
+                :class="[level.borderColor, 'hover:shadow-lg']">
+                <div class="text-5xl bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 animate-wiggle">{{ level.icon }}</div>
                 <div class="flex-1">
-                    <h3 class="text-xl font-bold" :class="level.textColor">{{ level.title }}</h3>
-                    <p class="text-sm text-gray-500">{{ level.description }}</p>
+                    <h3 class="text-xl font-bold mb-1" :class="level.textColor">{{ level.title }}</h3>
+                    <p class="text-sm text-slate-500 font-medium leading-relaxed">{{ level.description }}</p>
                     <span
-                        class="inline-block mt-2 text-sm bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-bold">
-                        規則：{{ level.ruleTag }}
+                        class="inline-block mt-2.5 text-xs bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 rounded-full font-bold">
+                        🧩 學習目標：{{ level.ruleTag }}
                     </span>
                 </div>
-                <div class="text-emerald-500 font-bold text-lg">挑戰 ➔</div>
+                <div class="text-emerald-500 font-bold text-xl flex items-center space-x-1 bg-emerald-50 px-3 py-2 rounded-2xl border border-emerald-200 hover:bg-emerald-100">
+                    <span>GO</span>
+                </div>
             </div>
         </div>
 
+        <!-- 遊戲挑戰中 -->
         <div v-else-if="currentStage === 'game'"
-            class="bg-white p-6 rounded-3xl shadow-xl border-4 border-amber-300 relative">
-            <button @click="currentStage = 'menu'"
-                class="text-sm text-slate-400 hover:text-slate-600 mb-4 flex items-center">
-                ⬅️ 返回關卡選單
-            </button>
-
-            <div class="mb-6 text-center">
-                <span class="bg-amber-100 text-amber-800 text-sm px-4 py-1.5 rounded-full font-bold">
-                    {{ activeLevel.title }} ({{ currentWordIndex + 1 }}/{{ activeLevel.words.length }})
+            class="bg-white p-6 rounded-3xl shadow-xl border-4 border-amber-300 relative bubble-card">
+            
+            <div class="flex justify-between items-center mb-6">
+                <button @click="currentStage = 'menu'"
+                    class="text-sm font-bold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 px-4 py-1.5 rounded-2xl transition bubble-btn">
+                    ⬅️ 返回地圖
+                </button>
+                <span class="bg-amber-100 border-2 border-amber-300 text-amber-800 text-sm px-4 py-1.5 rounded-full font-bold shadow-sm">
+                    🚩 {{ activeLevel.title }} ({{ currentWordIndex + 1 }}/{{ activeLevel.words.length }})
                 </span>
-                <h3 class="text-2xl font-bold mt-2 text-slate-700">{{ currentWord.prompt }}</h3>
-                <p class="text-base text-emerald-600 font-bold mt-2">💡 規則小貼士：{{ currentWord.hint }}</p>
             </div>
 
-            <div class="flex justify-center mb-6">
+            <!-- 題目區域 -->
+            <div class="mb-6 text-center bg-amber-50/50 p-4 rounded-2xl border-2 border-dashed border-amber-200">
+                <h3 class="text-2xl font-bold text-slate-700 leading-normal">{{ currentWord.prompt }}</h3>
+                <p class="text-base text-emerald-600 font-bold mt-2 bg-white inline-block px-4 py-1 rounded-full shadow-sm border border-emerald-100">
+                    💡 規則小提示：{{ currentWord.hint }}
+                </p>
+            </div>
+
+            <!-- 音量播放按鈕 -->
+            <div class="flex justify-center mb-8">
                 <button @click="speak(currentWord.target)"
-                    class="bg-amber-400 hover:bg-amber-500 text-white font-bold p-6 rounded-full shadow-lg text-3xl animate-bounce">
-                    🔊 點我聽發音
+                    class="bg-amber-400 hover:bg-amber-500 text-white font-bold p-8 rounded-full shadow-lg text-4xl bubble-btn animate-bounce flex items-center justify-center border-4 border-amber-200 w-24 h-24">
+                    🔊
                 </button>
             </div>
 
+            <!-- 選項按鈕區 -->
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <button v-for="(option, optionIdx) in currentWord.options" :key="optionIdx" @click="checkAnswer(option)"
-                    class="p-5 rounded-2xl border-4 font-bold text-2xl shadow-md transition text-center"
+                    class="p-5 rounded-3xl border-4 font-bold text-2xl shadow-md text-center flex flex-col items-center justify-center space-y-2 bubble-btn"
                     :class="getOptionClass(option)">
-                    <div class="text-3xl mb-1" v-if="option.type === 'short' || option.type === 'long'">{{ option.type
-                        === 'short' ? '🐣' : '🧙‍♂️' }}</div>
-                    <div class="text-3xl mb-1" v-else-if="option.type === 'silent'">🤫</div>
-                    <div class="text-3xl mb-1" v-else-if="option.type === 'th'">🗣️</div>
-                    <div class="text-3xl mb-1" v-else-if="option.type === 'syllable'">✂️</div>
-                    <div>{{ option.text }}</div>
-                    <div class="text-sm text-gray-400 mt-1" v-if="option.vowelType">({{ option.vowelType }})</div>
+                    <div class="text-4xl bg-white/70 p-2 rounded-2xl w-14 h-14 flex items-center justify-center shadow-inner border border-slate-100" v-if="option.type === 'short' || option.type === 'long'">
+                        {{ option.type === 'short' ? '🐣' : '🧙‍♂️' }}
+                    </div>
+                    <div class="text-4xl bg-white/70 p-2 rounded-2xl w-14 h-14 flex items-center justify-center shadow-inner border border-slate-100" v-else-if="option.type === 'silent'">🤫</div>
+                    <div class="text-4xl bg-white/70 p-2 rounded-2xl w-14 h-14 flex items-center justify-center shadow-inner border border-slate-100" v-else-if="option.type === 'th'">🗣️</div>
+                    <div class="text-4xl bg-white/70 p-2 rounded-2xl w-14 h-14 flex items-center justify-center shadow-inner border border-slate-100" v-else-if="option.type === 'syllable'">✂️</div>
+                    <div class="text-2xl">{{ option.text }}</div>
+                    <div class="text-xs text-slate-500 bg-white/50 px-2 py-0.5 rounded-full" v-if="option.vowelType">{{ option.vowelType }}</div>
                 </button>
             </div>
 
-            <div v-if="feedback" class="text-center font-bold text-xl p-4 rounded-2xl mb-4"
-                :class="feedback.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'">
+            <!-- 答題回饋 -->
+            <div v-if="feedback" class="text-center font-bold text-xl p-4 rounded-2xl mb-4 border-4 bubble-card"
+                :class="feedback.isCorrect ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : 'bg-rose-100 text-rose-700 border-rose-300'">
                 {{ feedback.message }}
             </div>
 
-            <div v-if="showMicBonus" class="bg-amber-50 border-2 border-amber-300 p-4 rounded-2xl text-center">
-                <p class="text-amber-800 font-bold text-lg mb-2">⭐ 麥克風語音加分題！大聲念出來：</p>
-                <div class="text-3xl font-bold text-amber-600 mb-3">{{ currentWord.target }}</div>
+            <!-- 麥克風加分挑戰 -->
+            <div v-if="showMicBonus" class="bg-amber-50 border-4 border-amber-300 p-5 rounded-3xl text-center bubble-card">
+                <p class="text-amber-800 font-bold text-lg mb-2">⭐ 麥克風語音挑戰！大聲念出來：</p>
+                <div class="text-4xl font-bold text-amber-600 mb-4 bg-white py-2 px-6 rounded-2xl inline-block shadow-inner border border-amber-100">{{ currentWord.target }}</div>
 
                 <div class="flex justify-center space-x-3">
                     <button @click="startVoiceRecognition"
-                        class="bg-emerald-500 text-white px-5 py-3 rounded-xl text-base font-bold shadow hover:bg-emerald-600">
-                        🎤 {{ isRecording ? '正在聆聽中...' : '點一下念單字' }}
+                        class="bg-emerald-500 text-white px-6 py-3 rounded-2xl text-base font-bold shadow hover:bg-emerald-600 border-b-4 border-emerald-700 active:border-b-0 bubble-btn flex items-center space-x-2">
+                        <span>🎤</span> <span>{{ isRecording ? '聆聽中...' : '按一下念單字' }}</span>
                     </button>
                     <button @click="nextWord"
-                        class="bg-slate-200 text-slate-600 px-5 py-3 rounded-xl text-base font-bold hover:bg-slate-300">
+                        class="bg-slate-200 text-slate-600 px-6 py-3 rounded-2xl text-base font-bold hover:bg-slate-300 border-b-4 border-slate-400 active:border-b-0 bubble-btn">
                         跳過 ➔
                     </button>
                 </div>
-                <p v-if="micResult" class="text-base mt-2 font-bold"
+                <p v-if="micResult" class="text-base mt-3 font-bold bg-white/70 py-2 rounded-xl"
                     :class="micResult.isMatch ? 'text-emerald-600' : 'text-amber-600'">
                     {{ micResult.text }}
                 </p>
                 <button v-if="micResult" @click="nextWord" @keydown.enter="nextWord"
-                    class="mt-3 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-2xl shadow-md text-lg">
+                    class="mt-4 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-2xl shadow-md text-lg border-b-4 border-emerald-700 bubble-btn">
                     繼續 ➔
                 </button>
             </div>
 
+            <!-- 下一題按鈕 -->
             <button v-if="feedback && feedback.isCorrect && !showMicBonus" @click="nextWord"
-                class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-2xl shadow-md text-lg">
+                class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-2xl shadow-md text-lg border-b-4 border-emerald-700 bubble-btn">
                 下一題 ➔
             </button>
         </div>
 
-        <div v-if="showParentModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
-                <h3 class="text-xl font-bold text-slate-800">⚙️ 家長區：自訂擴充單字</h3>
-                <p class="text-sm text-slate-500">您可以在此檢視或擴充短母音與長母音的題目卡片。</p>
+        <!-- 家長區彈出式選單 -->
+        <div v-if="showParentModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+            <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border-4 border-slate-800 bubble-card">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h3 class="text-xl font-bold text-slate-800">⚙️ 家長區：自訂擴充字庫</h3>
+                    <span class="text-2xl">👩‍🏫</span>
+                </div>
+                <p class="text-sm text-slate-500 leading-relaxed">您可以在此提供 Google 試算表連結或雲端硬碟 JSON 分享網址，為您的孩子新增練習的單字卡。</p>
 
-                <div class="space-y-2 mt-4 border-t pt-4 border-b pb-4">
-                    <label class="block text-sm font-bold text-slate-700">線上 JSON 題庫網址：</label>
-                    <input v-model="syncUrl" type="text" placeholder="https://..."
-                        class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
-                    <button @click="syncOnlineData" :disabled="syncLoading"
-                        class="w-full bg-emerald-500 text-white font-bold py-2 rounded-xl hover:bg-emerald-600 disabled:opacity-50">
-                        {{ syncLoading ? '載入中...' : '🔄 更新擴充字庫' }}
+                <div class="space-y-3 mt-4 border-t pt-4 border-b pb-4 border-slate-100">
+                    <label class="block text-sm font-bold text-slate-700">線上 JSON / 試算表題庫網址：</label>
+                    <input v-model="syncUrl" type="text" placeholder="貼上公開試算表或 JSON 網址..."
+                        class="w-full border-2 border-slate-200 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400">
+                    <button @click="syncOnlineData" :disabled="syncLoading" 
+                        class="w-full bg-emerald-500 text-white font-bold py-3 rounded-2xl hover:bg-emerald-600 disabled:opacity-50 border-b-4 border-emerald-700 bubble-btn">
+                        {{ syncLoading ? '載入中...' : '🔄 讀取並更新字庫' }}
                     </button>
-                    <p v-if="syncMessage" class="text-xs font-bold"
-                        :class="syncMessage.type === 'error' ? 'text-rose-500' : 'text-emerald-600'">{{ syncMessage.text
-                        }}</p>
+                    <p v-if="syncMessage" class="text-sm font-bold p-2 rounded-xl text-center"
+                        :class="syncMessage.type === 'error' ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-600'">
+                        {{ syncMessage.text }}
+                    </p>
                 </div>
 
-                <div class="bg-slate-50 p-3 rounded-xl max-h-40 overflow-y-auto text-sm space-y-2 mt-4">
+                <div class="bg-slate-50 p-3 rounded-2xl max-h-40 overflow-y-auto text-sm space-y-2 border border-slate-100">
+                    <div class="text-xs text-slate-400 font-bold mb-1">目前已載入單字清單：</div>
                     <div v-for="(word, idx) in activeLevel?.words || []" :key="idx"
-                        class="flex justify-between border-b pb-1">
-                        <span class="font-bold">{{ word.target }}</span>
-                        <span class="text-gray-500">{{ word.hint }}</span>
+                        class="flex justify-between border-b border-slate-100 pb-1.5">
+                        <span class="font-bold text-slate-700">{{ word.target }}</span>
+                        <span class="text-slate-400 text-xs">{{ word.hint }}</span>
                     </div>
                 </div>
 
                 <button @click="showParentModal = false"
-                    class="w-full bg-slate-800 text-white py-2 rounded-xl font-bold">
+                    class="w-full bg-slate-800 text-white py-3 rounded-2xl font-bold border-b-4 border-slate-900 bubble-btn">
                     關閉選單
                 </button>
             </div>
