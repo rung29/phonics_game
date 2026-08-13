@@ -5,10 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎮 英文發音魔法闖關島 (Phonics Adventure)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
 
         body {
             font-family: 'Fredoka', 'Comic Sans MS', sans-serif;
@@ -75,7 +77,7 @@
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-6">
-                <button v-for="option in currentWord.options" :key="option.text" @click="checkAnswer(option)"
+                <button v-for="(option, optionIdx) in currentWord.options" :key="optionIdx" @click="checkAnswer(option)"
                     class="p-5 rounded-2xl border-4 font-bold text-2xl shadow-md transition text-center"
                     :class="getOptionClass(option)">
                     <div class="text-3xl mb-1" v-if="option.type === 'short' || option.type === 'long'">{{ option.type
@@ -100,7 +102,7 @@
                 <div class="flex justify-center space-x-3">
                     <button @click="startVoiceRecognition"
                         class="bg-emerald-500 text-white px-5 py-3 rounded-xl text-base font-bold shadow hover:bg-emerald-600">
-                        🎤 {{ isRecording ? '正在聆聽中...' : '按住念單字' }}
+                        🎤 {{ isRecording ? '正在聆聽中...' : '點一下念單字' }}
                     </button>
                     <button @click="nextWord"
                         class="bg-slate-200 text-slate-600 px-5 py-3 rounded-xl text-base font-bold hover:bg-slate-300">
@@ -111,6 +113,10 @@
                     :class="micResult.isMatch ? 'text-emerald-600' : 'text-amber-600'">
                     {{ micResult.text }}
                 </p>
+                <button v-if="micResult" @click="nextWord" @keydown.enter="nextWord"
+                    class="mt-3 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-2xl shadow-md text-lg">
+                    繼續 ➔
+                </button>
             </div>
 
             <button v-if="feedback && feedback.isCorrect && !showMicBonus" @click="nextWord"
@@ -151,14 +157,33 @@
                 </button>
             </div>
         </div>
+
+        <div v-if="showCompleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-center">
+                <div class="text-5xl">🏆</div>
+                <h3 class="text-2xl font-bold text-amber-600">恭喜通關「{{ activeLevel?.title }}」！</h3>
+                <p class="text-lg text-slate-600 font-bold">目前總星數：⭐ {{ score }}</p>
+                <button @click="showCompleteModal = false"
+                    class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-2xl shadow-md text-lg">
+                    繼續冒險 ➔
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
-        const { createApp, ref, computed } = Vue;
+        const { createApp, ref, computed, watch } = Vue;
 
         createApp({
             setup() {
-                const score = ref(0);
+                const loadScore = () => {
+                    try { return parseInt(localStorage.getItem('phonics_score') || '0', 10) || 0; } catch { return 0; }
+                };
+                const score = ref(loadScore());
+                watch(score, (value) => {
+                    try { localStorage.setItem('phonics_score', String(value)); } catch { /* 隱私模式等情境忽略 */ }
+                });
+
                 const currentStage = ref('menu'); // 'menu' | 'game'
                 const activeLevel = ref(null);
                 const currentWordIndex = ref(0);
@@ -168,6 +193,7 @@
                 const isRecording = ref(false);
                 const micResult = ref(null);
                 const showParentModal = ref(false);
+                const showCompleteModal = ref(false);
 
                 const syncUrl = ref('');
                 const syncLoading = ref(false);
@@ -841,11 +867,24 @@
 
                 const currentWord = computed(() => activeLevel.value?.words[currentWordIndex.value]);
 
+                const shuffleOptions = (arr) => {
+                    const options = arr.slice();
+                    for (let i = options.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [options[i], options[j]] = [options[j], options[i]];
+                    }
+                    return options;
+                };
+
                 const startLevel = (level) => {
                     activeLevel.value = level;
                     currentWordIndex.value = 0;
                     currentStage.value = 'game';
                     resetTurn();
+                    if (currentWord.value) {
+                        currentWord.value.options = shuffleOptions(currentWord.value.options);
+                        speak(currentWord.value.target);
+                    }
                 };
 
                 const resetTurn = () => {
@@ -853,15 +892,33 @@
                     feedback.value = null;
                     showMicBonus.value = false;
                     micResult.value = null;
+                    isRecording.value = false;
                 };
 
                 // TTS 播放發音
+                let englishVoice = null;
+                const pickEnglishVoice = () => {
+                    if (englishVoice) return englishVoice;
+                    const voices = ('speechSynthesis' in window) ? window.speechSynthesis.getVoices() : [];
+                    englishVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en-us')) ||
+                        voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en')) || null;
+                    return englishVoice;
+                };
+                if ('speechSynthesis' in window && 'onvoiceschanged' in window.speechSynthesis) {
+                    window.speechSynthesis.onvoiceschanged = () => {
+                        englishVoice = null;
+                        pickEnglishVoice();
+                    };
+                }
+
                 const speak = (text) => {
                     if ('speechSynthesis' in window) {
                         window.speechSynthesis.cancel();
                         const utterance = new SpeechSynthesisUtterance(text);
                         utterance.lang = 'en-US';
                         utterance.rate = 0.8; // 稍微放慢速度適合小朋友
+                        const voice = pickEnglishVoice();
+                        if (voice) utterance.voice = voice;
                         window.speechSynthesis.speak(utterance);
                     }
                 };
@@ -869,19 +926,24 @@
                 // 答題判斷
                 const checkAnswer = (option) => {
                     selectedOption.value = option;
-                    speak(option.text);
 
                     if (option.correct) {
+                        speak(option.text);
                         feedback.value = { isCorrect: true, message: '🎉 太棒了！答對了！' };
                         score.value += 10;
                         showMicBonus.value = true; // 觸發語音加分題
                     } else {
-                        feedback.value = { isCorrect: false, message: '❌ 再試一次看看喔！注意看是長音還是短音。' };
+                        speak(currentWord.value.target); // 答錯時改播正確發音，方便對比練習
+                        feedback.value = { isCorrect: false, message: '❌ 再試一次！注意看看綠色框框的正確答案。' };
                     }
                 };
 
                 const getOptionClass = (option) => {
                     if (!selectedOption.value) return 'border-slate-200 bg-white hover:bg-amber-50';
+                    // 答錯後用綠色框提示正確答案，引導小朋友
+                    if (!feedback.value?.isCorrect && option.correct) {
+                        return 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-300';
+                    }
                     if (option === selectedOption.value) {
                         return option.correct ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-rose-500 bg-rose-50 text-rose-700';
                     }
@@ -892,9 +954,13 @@
                     if (currentWordIndex.value < activeLevel.value.words.length - 1) {
                         currentWordIndex.value++;
                         resetTurn();
+                        if (currentWord.value) {
+                            currentWord.value.options = shuffleOptions(currentWord.value.options);
+                            speak(currentWord.value.target);
+                        }
                     } else {
-                        alert('🏆 恭喜您通關此島嶼！獲得獎勵星星！');
                         currentStage.value = 'menu';
+                        showCompleteModal.value = true;
                     }
                 };
 
@@ -906,6 +972,8 @@
                         nextWord();
                         return;
                     }
+
+                    if (isRecording.value) return; // 避免重複點擊開啟多個麥克風
 
                     const recognition = new SpeechRecognition();
                     recognition.lang = 'en-US';
@@ -932,6 +1000,10 @@
                     recognition.onerror = () => {
                         isRecording.value = false;
                         micResult.value = { isMatch: false, text: '收音沒聽清楚，可以再試一次或點跳過喔！' };
+                    };
+
+                    recognition.onend = () => {
+                        isRecording.value = false; // 避免辨識結束時 isRecording 卡在 true
                     };
                 };
 
@@ -1033,6 +1105,39 @@
                     return Object.entries(levelMap).map(([id, words]) => ({ id, words }));
                 };
 
+                // 合併題庫資料（同 ID 合併新增單字、不同 ID 新增關卡），並避免重複加入相同單字
+                const mergeLevelData = (data) => {
+                    let addedWords = 0;
+                    let newLevels = 0;
+                    data.forEach(newLevel => {
+                        const existing = levels.value.find(l => l.id === newLevel.id);
+                        if (existing && newLevel.words) {
+                            const existingTargets = new Set(existing.words.map(w => w.target));
+                            const fresh = newLevel.words.filter(w => w && w.target && !existingTargets.has(w.target));
+                            existing.words.push(...fresh);
+                            addedWords += fresh.length;
+                        } else if (!existing) {
+                            const fresh = (newLevel.words || []).filter(w => w && w.target);
+                            levels.value.push({ ...newLevel, words: fresh });
+                            newLevels++;
+                            addedWords += fresh.length;
+                        }
+                    });
+                    return { addedWords, newLevels };
+                };
+
+                // 啟動時自動嘗試載入 sample_words.json，與「家長區」共用同一套合併機制。
+                // 用 file:// 直接開啟時 fetch 會失敗，將自動沿用內建字庫，不影響使用。
+                const loadLocalSample = async () => {
+                    try {
+                        const response = await fetch('sample_words.json', { cache: 'no-store' });
+                        if (!response.ok) return;
+                        const data = await response.json();
+                        if (Array.isArray(data)) mergeLevelData(data);
+                    } catch { /* 忽略，使用內建字庫 */ }
+                };
+                loadLocalSample();
+
                 const syncOnlineData = async () => {
                     if (!syncUrl.value) {
                         syncMessage.value = { type: 'error', text: '請輸入有效的網址' };
@@ -1057,19 +1162,7 @@
                         }
 
                         if (Array.isArray(data)) {
-                            let addedWords = 0;
-                            let newLevels = 0;
-                            data.forEach(newLevel => {
-                                const existing = levels.value.find(l => l.id === newLevel.id);
-                                if (existing && newLevel.words) {
-                                    existing.words.push(...newLevel.words);
-                                    addedWords += newLevel.words.length;
-                                } else if (!existing) {
-                                    levels.value.push(newLevel);
-                                    newLevels++;
-                                    addedWords += (newLevel.words || []).length;
-                                }
-                            });
+                            const { addedWords, newLevels } = mergeLevelData(data);
                             syncMessage.value = { type: 'success', text: `✅ 字庫擴充成功！新增 ${addedWords} 題${newLevels > 0 ? `，${newLevels} 個新關卡` : ''}` };
                             syncUrl.value = '';
                         } else {
@@ -1100,6 +1193,7 @@
                     isRecording,
                     micResult,
                     showParentModal,
+                    showCompleteModal,
                     startLevel,
                     speak,
                     checkAnswer,
