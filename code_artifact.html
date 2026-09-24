@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英語自然發音與閃卡學習庫 (Phonics Mastery & Flashcards)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-brand-600 text-white py-4 px-6 shadow-md">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-wide">英語自然發音 Flashcards 學習庫</h1>
+                <p class="text-brand-100 text-sm">從階段 0 到階段 4：循序漸進的解密與閃卡練習</p>
+            </div>
+            <div class="flex gap-2">
+                <button id="btn-view-cards" onclick="switchView('cards')" class="px-4 py-2 bg-white text-brand-700 font-semibold rounded-lg shadow hover:bg-brand-50 transition">
+                    🎴 閃卡練習區
+                </button>
+                <button id="btn-view-guide" onclick="switchView('guide')" class="px-4 py-2 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-700 transition">
+                    📖 發音地基指南
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-5xl w-full mx-auto p-4 sm:p-6">
+
+        <!-- VIEW 1: FLASHCARDS INTERACTIVE APP -->
+        <section id="view-cards" class="space-y-6">
+
+            <!-- Category Filter Tabs -->
+            <div class="flex flex-wrap gap-2 justify-center border-b pb-4">
+                <button onclick="filterCategory('all')" class="cat-btn px-3 py-1.5 rounded-full text-sm font-medium bg-brand-600 text-white" data-cat="all">全部單字</button>
+                <button onclick="filterCategory('stage0')" class="cat-btn px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 text-slate-700 hover:bg-slate-300" data-cat="stage0">階段 0: 正統鐵律 (CVC/Magic E)</button>
+                <button onclick="filterCategory('stage1')" class="cat-btn px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 text-slate-700 hover:bg-slate-300" data-cat="stage1">階段 1: 不發音特務 (kn/wr/mb)</button>
+                <button onclick="filterCategory('stage2')" class="cat-btn px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 text-slate-700 hover:bg-slate-300" data-cat="stage2">階段 2: 子音變身 (Soft C/G)</button>
+                <button onclick="filterCategory('stage3')" class="cat-btn px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 text-slate-700 hover:bg-slate-300" data-cat="stage3">階段 3: 淘氣母音 (Short ea/ch)</button>
+            </div>
+
+            <!-- Flashcard App Display -->
+            <div class="max-w-md mx-auto">
+                <div class="flex justify-between items-center mb-2 text-sm text-slate-500 font-medium">
+                    <span id="card-counter">卡片 1 / 10</span>
+                    <span id="card-tag" class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-semibold text-xs">Stage 0</span>
+                </div>
+
+                <!-- 3D Flip Card Container -->
+                <div id="flashcard" onclick="flipCard()" class="perspective-1000 w-full h-72 cursor-pointer">
+                    <div id="card-inner" class="relative w-full h-full transform-style-3d transition-transform duration-500 shadow-xl rounded-2xl border border-slate-200 bg-white">
+
+                        <!-- Front of Card -->
+                        <div class="absolute w-full h-full backface-hidden flex flex-col justify-center items-center p-6 text-center">
+                            <span class="text-xs font-bold text-slate-400 tracking-wider mb-2">點擊翻面解密 ↺</span>
+                            <h2 id="card-word" class="text-5xl font-black text-slate-800 my-2 tracking-wide">knee</h2>
+                            <p id="card-phonics-hint" class="text-brand-600 font-medium mt-2 text-lg">/ni/</p>
+                            <span class="mt-4 text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full">提示：隱形特務 K</span>
+                        </div>
+
+                        <!-- Back of Card -->
+                        <div class="absolute w-full h-full backface-hidden rotate-y-180 bg-brand-50 flex flex-col justify-between p-6 rounded-2xl border-2 border-brand-500">
+                            <div>
+                                <div class="flex justify-between items-start border-b border-brand-200 pb-2 mb-3">
+                                    <h3 id="card-back-word" class="text-2xl font-bold text-brand-700">knee</h3>
+                                    <span id="card-meaning" class="text-lg font-bold text-slate-700">膝蓋</span>
+                                </div>
+                                <p id="card-ipa" class="text-sm font-mono text-slate-500 mb-2">KK音標: [ni]</p>
+                                <div class="bg-white p-3 rounded-lg shadow-sm border border-brand-100 text-left">
+                                    <p class="text-xs font-bold text-brand-600 mb-1">💡 發音解密關鍵：</p>
+                                    <p id="card-rule" class="text-sm text-slate-700 leading-relaxed">k 遇到 n 害羞不發音！只發後面的 n (/n/) 音。</p>
+                                </div>
+                            </div>
+                            <div class="bg-amber-50 p-2.5 rounded-lg border border-amber-200 text-left">
+                                <p class="text-xs font-bold text-amber-800">🎯 互動記憶動作 / 口訣：</p>
+                                <p id="card-action" class="text-xs text-amber-900 mt-0.5">拍拍自己的膝蓋，大聲唸出 knee！</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Navigation Controls -->
+                <div class="flex justify-between items-center mt-6 gap-4">
+                    <button onclick="prevCard()" class="flex-1 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition shadow">
+                        ← 上一張
+                    </button>
+                    <button onclick="speakWord()" class="p-3 bg-brand-100 text-brand-600 rounded-xl font-bold hover:bg-brand-200 transition shadow" title="發音唸讀">
+                        🔊 聽發音
+                    </button>
+                    <button onclick="nextCard()" class="flex-1 py-3 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition shadow">
+                        下一張 →
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- VIEW 2: PHONICS GUIDE & SYLLABLE RULES -->
+        <section id="view-guide" class="hidden space-y-8 bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
+
+            <div class="border-b pb-4">
+                <h2 class="text-2xl font-bold text-slate-800">📚 英語自然發音與音節判讀指南</h2>
+                <p class="text-slate-600 mt-1">給家長與孩子的由淺入深學習地圖與詳細規則說明。</p>
+            </div>
+
+            <!-- 1. 音節判讀與開閉音節 -->
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-brand-600 flex items-center gap-2">
+                    <span>1. 如何看單字判斷音節與發音？</span>
+                </h3>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 leading-relaxed text-sm space-y-2">
+                    <p><strong>核心觀念：</strong> 音節數取決於「聽得到的母音發音數量」，而不是母音字母的個數（如 <em>cape</em> 有 2 個母音字母，但只有 1 個發音，故為 1 音節）。</p>
+                    <div class="grid sm:grid-cols-2 gap-4 mt-3">
+                        <div class="bg-white p-3 rounded border">
+                            <p class="font-bold text-slate-800">🚪 開音節 (Open Syllable)</p>
+                            <p class="text-xs text-slate-600 mt-1">音節以<strong>母音結尾</strong>（門打開了）。母音可以自由大聲發出「字母本尊長音」。</p>
+                            <p class="text-xs font-mono text-brand-600 mt-1">例：mi-grant (i發/aɪ/), ba-by (a發/e/)</p>
+                        </div>
+                        <div class="bg-white p-3 rounded border">
+                            <p class="font-bold text-slate-800">🔒 閉音節 (Closed Syllable)</p>
+                            <p class="text-xs text-slate-600 mt-1">音節以<strong>子音結尾</strong>（門被鎖住了）。母音被擠壓發出短促的「短母音」。</p>
+                            <p class="text-xs font-mono text-brand-600 mt-1">例：mit-ten (i發/ɪ/), bad (a發/æ/)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 階段 0 到階段 4 的循序漸進地圖 -->
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-brand-600">2. 特殊發音進階五大階段地圖</h3>
+
+                <div class="space-y-3 text-sm">
+                    <!-- Stage 0 -->
+                    <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                        <span class="font-bold text-emerald-800 text-base">第 0 階段：自然發音正統兩大鐵律 (地基 80%)</span>
+                        <ul class="list-disc list-inside text-emerald-900 mt-2 space-y-1">
+                            <li><strong>CVC 短母音：</strong> cat (/æ/), pen (/ɛ/), pig (/ɪ/), dog (/ɑ/), cup (/ʌ/)</li>
+                            <li><strong>Magic E (CVCe)：</strong> 字尾不發音的 e 讓前母音變長音（cake, pine, hope, cube）</li>
+                        </ul>
+                    </div>
+
+                    <!-- Stage 1 -->
+                    <div class="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                        <span class="font-bold text-blue-800 text-base">第一階段：害羞不發音字 (Silent Letters)</span>
+                        <p class="text-xs text-blue-700 mt-1">最推薦入門！字母只是不說話，完全不改變其他發音。</p>
+                        <ul class="list-disc list-inside text-blue-900 mt-2 space-y-1">
+                            <li><strong>Silent K (kn-)：</strong> knee, knife, knock, knight</li>
+                            <li><strong>Silent W (wr-)：</strong> write, wrong, wrist</li>
+                            <li><strong>Silent B (-mb)：</strong> climb, comb, thumb</li>
+                        </ul>
+                    </div>
+
+                    <!-- Stage 2 -->
+                    <div class="p-4 bg-purple-50 rounded-xl border border-purple-200">
+                        <span class="font-bold text-purple-800 text-base">第二階段：子音規律變身 (Soft C & Soft G)</span>
+                        <p class="text-xs text-purple-700 mt-1">遇到 e, i, y 時子音會溫柔變身。</p>
+                        <ul class="list-disc list-inside text-purple-900 mt-2 space-y-1">
+                            <li><strong>Soft C (c + e,i,y)：</strong> city, ice, rice (發 /s/)</li>
+                            <li><strong>Soft G (g + e,i,y)：</strong> magic, giant, page (發 /dʒ/)</li>
+                        </ul>
+                    </div>
+
+                    <!-- Stage 3 -->
+                    <div class="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                        <span class="font-bold text-amber-800 text-base">第三階段：淘氣母音與特殊組合</span>
+                        <ul class="list-disc list-inside text-amber-900 mt-2 space-y-1">
+                            <li><strong>淘氣短音 EA：</strong> bread, head, heavy, weather (發像 bed 的 /ɛ/)</li>
+                            <li><strong>硬音 CH：</strong> school, ache, chemistry (發 /k/)</li>
+                        </ul>
+                    </div>
+
+                    <!-- Stage 4 -->
+                    <div class="p-4 bg-rose-50 rounded-xl border border-rose-200">
+                        <span class="font-bold text-rose-800 text-base">第四階段：母音被子音拉走 (Bossy R / Bossy L)</span>
+                        <ul class="list-disc list-inside text-rose-900 mt-2 space-y-1">
+                            <li><strong>Bossy R：</strong> car, star, fork, bird</li>
+                            <li><strong>Bossy A (al/aw)：</strong> ball, tall, walk, draw</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 親子 5 分鐘迷你特務解密腳本 -->
+            <div class="bg-amber-50 p-5 rounded-2xl border border-amber-300 space-y-3">
+                <h3 class="text-lg font-bold text-amber-900">🎬 5 分鐘「Silent K 特務解密」家庭教學示範</h3>
+                <ol class="list-decimal list-inside text-sm text-amber-950 space-y-2 leading-relaxed">
+                    <li><strong>情境設定：</strong> 「寶貝，你知道英文單字裡有隱形特務嗎？叫 K！它只要遇到好朋友 N，就會害羞不敢說話（變透明）喔！」（做嘴唇比『噓』手勢）</li>
+                    <li><strong>實戰拆解：</strong> 拿出 <em>knee</em> 閃卡：「K 害羞不發音，我們直接唸 -nee（/ni/），拍拍膝蓋！」</li>
+                    <li><strong>3秒解密遊戲：</strong> 家長發出指令：「請找出……敲敲門！」孩子快速拍擊 <em>knock</em> 閃卡並敲桌子唸「-nock！」。</li>
+                </ol>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-100 border-t py-4 text-center text-xs text-slate-500">
+        英文學習筆記本 &copy; 自然發音與閃卡學習庫
+    </footer>
+
+    <!-- App Logic JavaScript -->
+    <script>
+        // Data Store
+        const cardsData = [
+            // Stage 0
+            { id: 1, category: 'stage0', stageTag: 'Stage 0 地基', word: 'cat', ipa: '[kæt]', meaning: '貓', rule: 'CVC 短母音：母音 a 被關在中間，嘴巴張大發短音 /æ/。', action: '嘴巴張大像看到恐龍大叫「啊！」，唸出 cat。' },
+            { id: 2, category: 'stage0', stageTag: 'Stage 0 地基', word: 'cake', ipa: '[kek]', meaning: '蛋糕', rule: 'Magic E：字尾不發音的 e 施展魔法，讓 a 發字母本名長音 /e/。', action: '手做揮魔法棒動作，唸出 cake！' },
+            { id: 3, category: 'stage0', stageTag: 'Stage 0 地基', word: 'pine', ipa: '[paɪn]', meaning: '松樹', rule: 'Magic E：字尾 e 讓 i 發字母音 /aɪ/。對比 pin (短音/ɪ/)。', action: '比出松樹尖尖的形狀，唸出 pine。' },
+            // Stage 1
+            { id: 4, category: 'stage1', stageTag: 'Stage 1 特務', word: 'knee', ipa: '[ni]', meaning: '膝蓋', rule: 'Silent K (kn-)：K 遇到 N 害羞不發音，只發 /n/。', action: '拍拍自己的膝蓋，大聲唸出 knee！' },
+            { id: 5, category: 'stage1', stageTag: 'Stage 1 特務', word: 'knife', ipa: '[naɪf]', meaning: '餐刀', rule: 'Silent K + Magic E：K 不發音，字尾 e 讓 i 發長音 /aɪ/。', action: '手做拿餐刀切牛排的動作，唸出 knife。' },
+            { id: 6, category: 'stage1', stageTag: 'Stage 1 特務', word: 'knock', ipa: '[nɑk]', meaning: '敲門', rule: 'Silent K：K 隱形不發音，直接發 -nock。', action: '用拳頭在桌上輕敲兩下，大聲唸 knock！' },
+            { id: 7, category: 'stage1', stageTag: 'Stage 1 特務', word: 'write', ipa: '[raɪt]', meaning: '寫字', rule: 'Silent W (wr-)：W 遇到 R 隱形不發音，直接發 /r/。', action: '做手拿筆在空中寫字的動作，唸 write。' },
+            // Stage 2
+            { id: 8, category: 'stage2', stageTag: 'Stage 2 變身', word: 'rice', ipa: '[raɪs]', meaning: '米飯', rule: 'Magic E + Soft C：字尾 e 讓 i 發長音，且 c 後面遇到 e 變軟發 /s/。', action: '做拿碗扒飯的動作，唸出 rice。' },
+            { id: 9, category: 'stage2', stageTag: 'Stage 2 變身', word: 'city', ipa: '[ˈsɪti]', meaning: '城市', rule: 'Soft C：c 後面遇到 i 時變身發 /s/（司）音。', action: '雙手比出高樓大廈的樣子，唸 city。' },
+            // Stage 3
+            { id: 10, category: 'stage3', stageTag: 'Stage 3 淘氣', word: 'bread', ipa: '[brɛd]', meaning: '麵包', rule: '淘氣短音 EA：ea 不發長音 /i/，改發像 bed 的短音 /ɛ/。', action: '把手放在頭上假裝是麵包，唸出 bread (音同bed+r)。' },
+            { id: 11, category: 'stage3', stageTag: 'Stage 3 淘氣', word: 'head', ipa: '[hɛd]', meaning: '頭', rule: '淘氣短音 EA：ea 發短音 /ɛ/。', action: '摸摸自己的頭，大聲唸 head！' }
+        ];
+
+        let filteredCards = [...cardsData];
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        // View Switching
+        function switchView(view) {
+            const cardsView = document.getElementById('view-cards');
+            const guideView = document.getElementById('view-guide');
+            const btnCards = document.getElementById('btn-view-cards');
+            const btnGuide = document.getElementById('btn-view-guide');
+
+            if (view === 'cards') {
+                cardsView.classList.remove('hidden');
+                guideView.classList.add('hidden');
+                btnCards.className = "px-4 py-2 bg-white text-brand-700 font-semibold rounded-lg shadow hover:bg-brand-50 transition";
+                btnGuide.className = "px-4 py-2 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-700 transition";
+            } else {
+                cardsView.classList.add('hidden');
+                guideView.classList.remove('hidden');
+                btnGuide.className = "px-4 py-2 bg-white text-brand-700 font-semibold rounded-lg shadow hover:bg-brand-50 transition";
+                btnCards.className = "px-4 py-2 bg-brand-500 text-white font-semibold rounded-lg hover:bg-brand-700 transition";
+            }
+        }
+
+        // Category Filter
+        function filterCategory(cat) {
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = "cat-btn px-3 py-1.5 rounded-full text-sm font-medium bg-brand-600 text-white";
+                } else {
+                    btn.className = "cat-btn px-3 py-1.5 rounded-full text-sm font-medium bg-slate-200 text-slate-700 hover:bg-slate-300";
+                }
+            });
+
+            if (cat === 'all') {
+                filteredCards = [...cardsData];
+            } else {
+                filteredCards = cardsData.filter(c => c.category === cat);
+            }
+
+            currentIndex = 0;
+            resetFlip();
+            renderCard();
+        }
+
+        // Render Card Content
+        function renderCard() {
+            if (filteredCards.length === 0) return;
+            const card = filteredCards[currentIndex];
+
+            document.getElementById('card-counter').innerText = `卡片 ${currentIndex + 1} / ${filteredCards.length}`;
+            document.getElementById('card-tag').innerText = card.stageTag;
+            document.getElementById('card-word').innerText = card.word;
+            document.getElementById('card-phonics-hint').innerText = card.ipa;
+
+            document.getElementById('card-back-word').innerText = card.word;
+            document.getElementById('card-meaning').innerText = card.meaning;
+            document.getElementById('card-ipa').innerText = `音標: ${card.ipa}`;
+            document.getElementById('card-rule').innerText = card.rule;
+            document.getElementById('card-action').innerText = card.action;
+        }
+
+        // Flip Card
+        function flipCard() {
+            const cardInner = document.getElementById('card-inner');
+            isFlipped = !isFlipped;
+            if (isFlipped) {
+                cardInner.classList.add('rotate-y-180');
+            } else {
+                cardInner.classList.remove('rotate-y-180');
+            }
+        }
+
+        function resetFlip() {
+            isFlipped = false;
+            document.getElementById('card-inner').classList.remove('rotate-y-180');
+        }
+
+        // Navigation
+        function nextCard() {
+            resetFlip();
+            setTimeout(() => {
+                currentIndex = (currentIndex + 1) % filteredCards.length;
+                renderCard();
+            }, 150);
+        }
+
+        function prevCard() {
+            resetFlip();
+            setTimeout(() => {
+                currentIndex = (currentIndex - 1 + filteredCards.length) % filteredCards.length;
+                renderCard();
+            }, 150);
+        }
+
+        // Speech Synthesis
+        function speakWord() {
+            if ('speechSynthesis' in window) {
+                const card = filteredCards[currentIndex];
+                const utterance = new SpeechSynthesisUtterance(card.word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.8;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("您的瀏覽器暫時不支援語音朗讀功能。");
+            }
+        }
+
+        // Initialize App
+        renderCard();
+    </script>
+</body>
+</html>

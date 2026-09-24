@@ -1,27 +1,29 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 英文發音魔法闖關島 (Phonics Adventure)</title>
+    <title>🎮 英文發音魔法闖關島</title>
     <script src="https://cdn.tailwindcss.com/3.4.16"></script>
     <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="word-catalog.js"></script>
+    <script src="guide-data.js"></script>
+    <link rel="stylesheet" href="guide.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        [v-cloak] { display: none; }
         body {
             font-family: 'Fredoka', 'Comic Sans MS', sans-serif;
             background: linear-gradient(135deg, #fef9c3 0%, #f0fdf4 50%, #ecfeff 100%);
         }
-
-        /* 泡泡風 3D 陰影與按鈕 */
         .bubble-card {
             border-bottom-width: 8px !important;
             transition: all 0.2s ease;
         }
-
         .bubble-btn {
             border-bottom-width: 6px !important;
             transition: all 0.1s ease;
@@ -31,1245 +33,625 @@
             border-bottom-width: 2px !important;
             margin-bottom: 4px;
         }
-
-        /* 可愛微漂浮動畫 */
         @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            0%, 100% { transform: translateY(0) rotate(0deg); }
             50% { transform: translateY(-6px) rotate(1deg); }
         }
-        .animate-float {
-            animation: float 4s ease-in-out infinite;
-        }
-
-        /* 可愛搖擺動畫 */
-        @keyframes wiggle {
-            0%, 100% { transform: rotate(-2deg); }
-            50% { transform: rotate(2deg); }
-        }
-        .animate-wiggle:hover {
-            animation: wiggle 0.3s ease-in-out infinite;
-        }
+        .animate-float { animation: float 4s ease-in-out infinite; }
     </style>
 </head>
-
 <body class="text-slate-700 min-h-screen pb-12">
-
-    <div id="app" class="max-w-xl mx-auto px-4 py-8">
-        <!-- 頂部導覽列 (可愛雲朵風) -->
-        <header
-            class="flex justify-between items-center mb-8 bg-white p-4 rounded-3xl shadow-lg border-4 border-amber-300 bubble-card animate-float">
+    <div id="app" v-cloak class="max-w-6xl mx-auto px-4 py-8">
+        <header class="flex flex-wrap justify-between items-center gap-3 mb-8 bg-white p-4 rounded-3xl shadow-lg border-4 border-amber-300 bubble-card animate-float">
             <div class="flex items-center space-x-2">
                 <span class="text-3xl">🔮</span>
                 <div>
                     <h1 class="text-2xl font-bold bg-gradient-to-r from-amber-500 to-emerald-500 bg-clip-text text-transparent">發音魔法冒險</h1>
-                    <p class="text-xs text-amber-600 font-bold">Short & Long Vowels</p>
+                    <p class="text-xs text-amber-600 font-bold">Phonics Adventure</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
-                <div class="bg-amber-100 px-4 py-2 rounded-full border-2 border-amber-300 font-bold text-amber-800 text-lg shadow-sm flex items-center space-x-1">
-                    <span>⭐</span>
-                    <span>{{ score }}</span>
+            <div class="flex items-center justify-end flex-wrap gap-2">
+                <div class="bg-amber-100 px-4 py-2 rounded-full border-2 border-amber-300 font-bold text-amber-800 text-lg shadow-sm">
+                    ⭐ {{ score }}
                 </div>
-                <button @click="showParentModal = true"
-                    class="bg-rose-100 hover:bg-rose-200 text-rose-600 border-2 border-rose-300 px-3 py-2 rounded-2xl font-bold text-sm transition bubble-btn">
-                    ⚙️ 家長區
+                <button @click="openGuide"
+                    class="bg-sky-100 hover:bg-sky-200 text-sky-700 border-2 border-sky-300 px-3 py-2 rounded-2xl font-bold text-sm bubble-btn">
+                    📖 規則學堂
+                </button>
+                <button @click="openParentModal"
+                    class="bg-rose-100 hover:bg-rose-200 text-rose-600 border-2 border-rose-300 px-3 py-2 rounded-2xl font-bold text-sm bubble-btn">
+                    ⚙️ 字庫管理
                 </button>
             </div>
         </header>
 
-        <!-- 主選單：選擇關卡 -->
-        <div v-if="currentStage === 'menu'" class="space-y-5">
-            <h2 class="text-2xl font-bold text-center text-emerald-800 mb-6 flex items-center justify-center space-x-2">
-                <span>🌴</span> <span>選擇你的冒險島嶼</span> <span>🌴</span>
-            </h2>
+        <main v-if="currentStage === 'menu'" class="max-w-3xl mx-auto space-y-5">
+            <h2 class="text-2xl font-bold text-center text-emerald-800 mb-6">🌴 選擇你的冒險島嶼 🌴</h2>
 
-            <div v-for="level in levels" :key="level.id" @click="startLevel(level)"
-                class="bg-white p-5 rounded-3xl shadow-md border-4 cursor-pointer flex items-center space-x-4 bubble-card hover:scale-102 hover:-translate-y-1 active:translate-y-0"
-                :class="[level.borderColor, 'hover:shadow-lg']">
-                <div class="text-5xl bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 animate-wiggle">{{ level.icon }}</div>
+            <div v-if="catalogLoading" class="bg-white border-4 border-sky-200 rounded-3xl p-8 text-center shadow">
+                <div class="text-4xl animate-bounce mb-3">📚</div>
+                <p class="font-bold text-sky-700">正在載入雲端字庫…</p>
+            </div>
+
+            <div v-else-if="catalogError" class="bg-white border-4 border-rose-300 rounded-3xl p-6 text-center shadow space-y-4">
+                <div class="text-4xl">☁️</div>
+                <p class="font-bold text-rose-700">字庫載入失敗</p>
+                <p class="text-sm text-slate-600 break-words">{{ catalogError }}</p>
+                <button @click="loadPublicCatalog"
+                    class="bg-rose-500 text-white px-6 py-3 rounded-2xl font-bold border-b-4 border-rose-700 bubble-btn">
+                    重新載入
+                </button>
+            </div>
+
+            <button v-for="level in levels" :key="level.id" @click="startLevel(level)"
+                :disabled="!level.words.length"
+                class="w-full text-left bg-white p-5 rounded-3xl shadow-md border-4 flex items-center space-x-4 bubble-card hover:shadow-lg hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                :class="level.borderColor">
+                <div class="text-5xl bg-slate-50 p-3 rounded-2xl border-2 border-slate-100">{{ level.icon }}</div>
                 <div class="flex-1">
                     <h3 class="text-xl font-bold mb-1" :class="level.textColor">{{ level.title }}</h3>
-                    <p class="text-sm text-slate-500 font-medium leading-relaxed">{{ level.description }}</p>
-                    <span
-                        class="inline-block mt-2.5 text-xs bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 rounded-full font-bold">
-                        🧩 學習目標：{{ level.ruleTag }}
-                    </span>
+                    <p class="text-sm text-slate-500 font-medium">{{ level.description }}</p>
+                    <div class="flex flex-wrap gap-2 mt-2.5">
+                        <span class="text-xs bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 rounded-full font-bold">
+                            🧩 {{ level.ruleTag }}
+                        </span>
+                        <span class="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1 rounded-full font-bold">
+                            {{ level.words.length }} 題
+                        </span>
+                    </div>
                 </div>
-                <div class="text-emerald-500 font-bold text-xl flex items-center space-x-1 bg-emerald-50 px-3 py-2 rounded-2xl border border-emerald-200 hover:bg-emerald-100">
-                    <span>GO</span>
-                </div>
-            </div>
-        </div>
+                <div class="text-emerald-500 font-bold text-xl bg-emerald-50 px-3 py-2 rounded-2xl border border-emerald-200">GO</div>
+            </button>
+        </main>
 
-        <!-- 遊戲挑戰中 -->
-        <div v-else-if="currentStage === 'game'"
-            class="bg-white p-6 rounded-3xl shadow-xl border-4 border-amber-300 relative bubble-card">
-            
-            <div class="flex justify-between items-center mb-6">
-                <button @click="currentStage = 'menu'"
-                    class="text-sm font-bold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 px-4 py-1.5 rounded-2xl transition bubble-btn">
-                    ⬅️ 返回地圖
+        <main v-else-if="currentStage === 'guide'" class="guide-page space-y-6">
+            <div class="flex justify-between items-center gap-3">
+                <button @click="backToMenu"
+                    class="text-sm font-bold text-slate-500 bg-slate-100 border-2 border-slate-300 px-4 py-1.5 rounded-2xl bubble-btn">
+                    ⬅️ 返回冒險島
                 </button>
-                <span class="bg-amber-100 border-2 border-amber-300 text-amber-800 text-sm px-4 py-1.5 rounded-full font-bold shadow-sm">
-                    🚩 {{ activeLevel.title }} ({{ currentWordIndex + 1 }}/{{ activeLevel.words.length }})
+                <span class="bg-sky-100 border-2 border-sky-300 text-sky-700 text-sm px-4 py-1.5 rounded-full font-bold">
+                    📖 規則學堂
                 </span>
             </div>
 
-            <!-- 題目區域 -->
+            <section class="guide-hero">
+                <p class="guide-kicker">Phonics Adventure · Learning Map</p>
+                <div class="relative z-10 max-w-3xl">
+                    <h2 class="mt-2 text-3xl font-black text-sky-900 sm:text-4xl">發音規則學堂</h2>
+                    <p class="mt-3 text-sm leading-relaxed text-slate-700 sm:text-base">
+                        先找線索、再切音節，最後套用發音工具箱。每個階段都會用故事、圖像、例字和小測驗陪孩子解密。
+                    </p>
+                </div>
+            </section>
+
+            <section class="space-y-3">
+                <div class="flex flex-wrap items-end justify-between gap-2">
+                    <div>
+                        <p class="guide-kicker">Adventure Roadmap</p>
+                        <h3 class="text-2xl font-black text-emerald-900">循序漸進的學習地圖</h3>
+                    </div>
+                    <span class="text-xs font-bold text-slate-500">11 個階段都已整理，可依序開始學習</span>
+                </div>
+                <div class="guide-roadmap">
+                    <button v-for="stage in guideData.curriculumRoadmap" :key="stage.id"
+                        @click="openLesson(stage.id)" :disabled="stage.status !== 'ready'"
+                        class="guide-stage-card"
+                        :class="stage.status === 'ready' ? 'is-ready' : 'is-planned'">
+                        <span class="guide-stage-number">{{ stage.number }}</span>
+                        <span class="guide-stage-icon">{{ stage.icon }}</span>
+                        <h4 class="mt-3 pr-8 text-lg font-black text-slate-800">{{ stage.title }}</h4>
+                        <p class="mt-1 text-xs font-medium text-slate-500">{{ stage.subtitle }}</p>
+                        <span class="mt-3 inline-flex rounded-full px-2.5 py-1 text-xs font-bold"
+                            :class="stage.status === 'ready' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'">
+                            {{ stage.statusLabel }}
+                        </span>
+                    </button>
+                </div>
+            </section>
+
+            <section class="bg-white p-6 rounded-3xl shadow-xl border-4 border-sky-300 bubble-card space-y-6">
+                <div class="text-center border-b-2 border-sky-100 pb-5">
+                    <div class="text-5xl mb-3">📚</div>
+                    <h2 class="text-2xl font-bold text-sky-800">規則索引與補充例字</h2>
+                    <p class="text-sm text-slate-500 mt-2 leading-relaxed">{{ guideData.subtitle }}</p>
+                </div>
+
+                <div class="bg-amber-50 p-4 rounded-2xl border-2 border-amber-200 leading-relaxed text-sm">
+                    <p class="font-bold text-amber-800 mb-1">💡 先記住這個核心觀念</p>
+                    <p class="text-amber-950">{{ guideData.intro }}</p>
+                </div>
+
+                <div class="space-y-3">
+                    <h3 class="text-xl font-bold text-emerald-800">1. 開音節與閉音節</h3>
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <article v-for="example in guideData.fundamentals" :key="example.title"
+                            class="p-4 rounded-2xl border-2 space-y-2"
+                            :class="guideTheme(example.theme).panel">
+                            <h4 class="font-bold" :class="guideTheme(example.theme).heading">{{ example.title }}</h4>
+                            <p class="text-sm text-slate-700 leading-relaxed">{{ example.text }}</p>
+                            <p class="text-xs font-mono text-slate-600 bg-white/70 rounded-xl px-3 py-2">例：{{ example.examples }}</p>
+                            <div v-if="example.ruleId && guideExamples(example.ruleId).length" class="flex flex-wrap gap-2">
+                                <button v-for="word in guideExamples(example.ruleId)" :key="word.word"
+                                    @click="openGuideExample(example.ruleId, word.word)"
+                                    class="text-xs font-bold text-sky-700 bg-white border border-sky-200 px-2.5 py-1 rounded-full hover:bg-sky-50">
+                                    {{ word.word }}
+                                </button>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <h3 class="text-xl font-bold text-purple-800">2. 五大發音階段地圖</h3>
+                    <div class="space-y-3">
+                        <article v-for="stage in guideData.stages" :key="stage.title"
+                            class="p-4 rounded-2xl border-2 space-y-3"
+                            :class="guideTheme(stage.theme).panel">
+                            <div class="flex flex-wrap justify-between items-center gap-2">
+                                <h4 class="font-bold text-base" :class="guideTheme(stage.theme).heading">{{ stage.title }}</h4>
+                                <span class="text-xs font-bold px-3 py-1 rounded-full bg-white/70" :class="guideTheme(stage.theme).heading">
+                                    {{ stage.subtitle }}
+                                </span>
+                            </div>
+                            <div class="grid gap-2 sm:grid-cols-2">
+                                <div v-for="rule in stage.rules" :key="rule.label" class="bg-white/75 p-3 rounded-xl border border-white/80">
+                                    <p class="font-bold text-sm text-slate-800">{{ rule.label }}</p>
+                                    <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ rule.text }}</p>
+                                    <p class="text-xs font-mono text-slate-700 mt-2">{{ rule.examples }}</p>
+                                    <div v-if="rule.ruleId && guideExamples(rule.ruleId).length" class="flex flex-wrap gap-2 mt-2">
+                                        <button v-for="word in guideExamples(rule.ruleId)" :key="word.word"
+                                            @click="openGuideExample(rule.ruleId, word.word)"
+                                            class="text-xs font-bold text-sky-700 bg-white border border-sky-200 px-2.5 py-1 rounded-full hover:bg-sky-50">
+                                            {{ word.word }}
+                                        </button>
+                                        <button @click="openGuideRule(rule.ruleId)"
+                                            class="text-xs font-bold text-slate-600 px-2 py-1 hover:text-sky-700">
+                                            查看規則詳解 →
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 p-5 rounded-2xl border-2 border-amber-300 space-y-3">
+                    <h3 class="text-lg font-bold text-amber-900">{{ guideData.familyActivity.title }}</h3>
+                    <ol class="list-decimal list-inside text-sm text-amber-950 space-y-2 leading-relaxed">
+                        <li v-for="step in guideData.familyActivity.steps" :key="step">{{ step }}</li>
+                    </ol>
+                </div>
+
+                <button @click="backToMenu"
+                    class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-2xl border-b-4 border-sky-700 bubble-btn">
+                    回到遊戲關卡 ➜
+                </button>
+            </section>
+        </main>
+
+        <main v-else-if="currentStage === 'guide-lesson' && selectedLessonStage" class="guide-page space-y-6">
+            <div class="flex justify-between items-center gap-3">
+                <button @click="backToGuide"
+                    class="text-sm font-bold text-slate-500 bg-slate-100 border-2 border-slate-300 px-4 py-1.5 rounded-2xl bubble-btn">
+                    ⬅️ 返回學習地圖
+                </button>
+                <span class="bg-emerald-100 border-2 border-emerald-300 text-emerald-700 text-sm px-4 py-1.5 rounded-full font-bold">
+                    第 {{ selectedLessonStage.number }} 階段
+                </span>
+            </div>
+
+            <section class="guide-lesson-hero">
+                <div class="guide-lesson-copy">
+                    <p class="guide-kicker">Stage {{ selectedLessonStage.number }} · Phonics Detective</p>
+                    <h2 class="mt-2 text-3xl font-black text-slate-900 sm:text-4xl">{{ selectedLessonStage.title }}</h2>
+                    <p class="mt-2 font-mono text-sm font-bold text-emerald-700">{{ selectedLessonStage.subtitle }}</p>
+                    <p class="mt-4 text-sm leading-relaxed text-slate-700">{{ selectedLessonStage.intro }}</p>
+                    <div class="mt-5 rounded-2xl border-2 border-amber-200 bg-amber-50 p-4">
+                        <p class="text-xs font-bold text-amber-700">今天的任務</p>
+                        <p class="mt-1 text-sm font-bold leading-relaxed text-amber-950">{{ selectedLessonStage.goal }}</p>
+                    </div>
+                </div>
+                <img class="guide-lesson-art" :src="selectedLessonStage.image" :alt="selectedLessonStage.imageAlt">
+            </section>
+
+            <section class="space-y-3">
+                <div>
+                    <p class="guide-kicker">Decode Algorithm</p>
+                    <h3 class="text-2xl font-black text-sky-900">三步解密流程</h3>
+                </div>
+                <div class="guide-step-grid">
+                    <article v-for="step in selectedLessonStage.steps" :key="step.number" class="guide-step-card">
+                        <span class="guide-step-number">{{ step.number }}</span>
+                        <h4 class="mt-3 text-lg font-black text-slate-800">{{ step.title }}</h4>
+                        <p class="mt-2 text-sm leading-relaxed text-slate-600">{{ step.text }}</p>
+                        <div v-if="step.tiles?.length" class="guide-letter-row">
+                            <span v-for="(tile, index) in step.tiles" :key="`${step.number}-${index}`"
+                                class="guide-letter-tile" :class="tile.tone">
+                                {{ tile.text }}
+                            </span>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="space-y-3">
+                <div class="flex flex-wrap items-end justify-between gap-2">
+                    <div>
+                        <p class="guide-kicker">Word Collection</p>
+                        <h3 class="text-2xl font-black text-emerald-900">例字偵查卡</h3>
+                    </div>
+                    <span class="text-xs font-bold text-slate-500">點擊卡片可以聽發音</span>
+                </div>
+                <div class="guide-example-grid">
+                    <button v-for="example in selectedLessonStage.examples" :key="example.word"
+                        @click="speak(example.word)" class="guide-example-card">
+                        <span class="guide-example-icon">{{ example.icon }}</span>
+                        <span class="mt-2 flex items-center justify-between gap-2">
+                            <span class="guide-word">{{ example.word }}</span>
+                            <span class="text-lg">🔊</span>
+                        </span>
+                        <span class="mt-1 text-xs font-mono text-slate-500">{{ example.ipa }}</span>
+                        <span class="mt-2 guide-focus-pill">{{ example.focus }}</span>
+                        <span class="mt-2 text-left text-xs leading-relaxed text-slate-600">{{ example.note }}</span>
+                    </button>
+                </div>
+            </section>
+
+            <section class="space-y-3">
+                <div>
+                    <p class="guide-kicker">Compare & Notice</p>
+                    <h3 class="text-2xl font-black text-amber-900">找出聲音的變化</h3>
+                    <p class="mt-1 text-sm text-slate-600">{{ selectedLessonStage.contrast.text }}</p>
+                </div>
+                <div class="guide-compare-grid">
+                    <article v-for="pair in selectedLessonStage.contrast.pairs" :key="`${pair.shortWord}-${pair.longWord}`" class="guide-compare-card">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button @click="speak(pair.shortWord)" class="rounded-xl bg-white px-3 py-2 font-black text-slate-800 shadow-sm">
+                                {{ pair.shortWord }}
+                            </button>
+                            <span class="font-black text-amber-500">→</span>
+                            <button @click="speak(pair.longWord)" class="rounded-xl bg-white px-3 py-2 font-black text-slate-800 shadow-sm">
+                                {{ pair.longWord }}
+                            </button>
+                        </div>
+                        <p class="mt-2 font-mono text-xs text-slate-500">{{ pair.shortIpa }} → {{ pair.longIpa }}</p>
+                        <p class="mt-2 text-xs font-bold leading-relaxed text-amber-900">{{ pair.hint }}</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="guide-quiz space-y-4">
+                <div>
+                    <p class="guide-kicker">Mini Mission</p>
+                    <h3 class="text-2xl font-black text-pink-900">小小偵探測驗</h3>
+                    <p class="mt-2 text-sm font-bold text-slate-700">{{ selectedLessonStage.quiz.question }}</p>
+                </div>
+                <div class="grid gap-3 sm:grid-cols-3">
+                    <button v-for="option in selectedLessonStage.quiz.options" :key="option.id"
+                        @click="answerLessonQuiz(option.id)" class="guide-quiz-option"
+                        :class="lessonQuizAnswer === option.id
+                            ? (option.id === selectedLessonStage.quiz.answerId ? 'is-correct' : 'is-wrong')
+                            : ''">
+                        <span class="block text-lg font-black text-slate-900">{{ option.label }}</span>
+                        <span class="mt-1 block text-xs font-mono text-slate-500">{{ option.hint }}</span>
+                    </button>
+                </div>
+                <div v-if="lessonQuizAnswer" class="rounded-2xl bg-white/80 p-3 text-sm font-bold"
+                    :class="lessonQuizAnswer === selectedLessonStage.quiz.answerId ? 'text-emerald-700' : 'text-rose-700'">
+                    {{ lessonQuizAnswer === selectedLessonStage.quiz.answerId
+                        ? selectedLessonStage.quiz.correctText
+                        : selectedLessonStage.quiz.retryText }}
+                </div>
+            </section>
+
+            <button @click="backToGuide"
+                class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-2xl border-b-4 border-emerald-700 bubble-btn">
+                回到學習地圖 ➜
+            </button>
+        </main>
+
+        <main v-else-if="currentStage === 'guide-detail' && selectedGuideRule" class="guide-page space-y-5">
+            <div class="flex justify-between items-center gap-3">
+                <button @click="backToGuide"
+                    class="text-sm font-bold text-slate-500 bg-slate-100 border-2 border-slate-300 px-4 py-1.5 rounded-2xl bubble-btn">
+                    ⬅️ 返回規則總覽
+                </button>
+                <span class="bg-sky-100 border-2 border-sky-300 text-sky-700 text-sm px-4 py-1.5 rounded-full font-bold">
+                    📚 規則詳解
+                </span>
+            </div>
+
+            <section class="bg-white p-6 rounded-3xl shadow-xl border-4 border-sky-300 bubble-card space-y-5">
+                <div class="text-center border-b-2 border-sky-100 pb-5">
+                    <div class="text-5xl mb-3">🔍</div>
+                    <h2 class="text-2xl font-bold" :class="guideTheme(selectedGuideRule.theme).heading">{{ selectedGuideRule.title }}</h2>
+                    <p class="text-sm text-slate-600 mt-2 leading-relaxed">{{ selectedGuideRule.summary }}</p>
+                </div>
+
+                <div class="p-4 rounded-2xl border-2" :class="guideTheme(selectedGuideRule.theme).panel">
+                    <p class="text-sm text-slate-700 leading-relaxed">{{ selectedGuideRule.explanation }}</p>
+                </div>
+
+                <div v-if="selectedGuideExample" class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 space-y-3">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <div>
+                            <p class="text-xs font-bold text-amber-700">目前解密單字</p>
+                            <h3 class="text-4xl font-black tracking-wide text-amber-950">{{ selectedGuideExample.word }}</h3>
+                        </div>
+                        <button @click="speak(selectedGuideExample.word)"
+                            class="bg-white text-amber-700 border-2 border-amber-300 px-4 py-2 rounded-2xl font-bold bubble-btn">
+                            🔊 聽發音
+                        </button>
+                    </div>
+                    <p class="font-mono text-lg text-amber-900">{{ selectedGuideExample.ipa }}</p>
+                    <p class="text-sm font-bold text-slate-700">意思：{{ selectedGuideExample.meaning }}</p>
+                    <div class="bg-white/80 rounded-xl p-3 space-y-1">
+                        <p class="text-sm"><span class="font-bold text-slate-800">音節：</span>{{ selectedGuideExample.syllables }}</p>
+                        <p class="text-sm leading-relaxed"><span class="font-bold text-slate-800">解密：</span>{{ selectedGuideExample.breakdown }}</p>
+                    </div>
+                </div>
+
+                <div v-if="selectedGuideRule.examples?.length" class="space-y-3">
+                    <h3 class="text-lg font-bold text-slate-800">同一規則的例字</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <button v-for="example in selectedGuideRule.examples" :key="example.word"
+                            @click="openGuideExample(selectedGuideRule.id, example.word)"
+                            class="px-3 py-2 rounded-2xl border-2 font-bold text-sm transition"
+                            :class="example.word === selectedGuideExample?.word
+                                ? 'bg-sky-500 border-sky-700 text-white'
+                                : 'bg-sky-50 border-sky-200 text-sky-800 hover:bg-sky-100'">
+                            {{ example.word }}
+                        </button>
+                    </div>
+                </div>
+
+                <button @click="backToGuide"
+                    class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-2xl border-b-4 border-sky-700 bubble-btn">
+                    回到規則總覽 ➜
+                </button>
+            </section>
+        </main>
+
+        <main v-else-if="currentStage === 'game' && currentWord"
+            class="max-w-xl mx-auto bg-white p-6 rounded-3xl shadow-xl border-4 border-amber-300 bubble-card">
+            <div class="flex justify-between items-center mb-6 gap-3">
+                <button @click="currentStage = 'menu'"
+                    class="text-sm font-bold text-slate-500 bg-slate-100 border-2 border-slate-300 px-4 py-1.5 rounded-2xl">
+                    ⬅️ 返回地圖
+                </button>
+                <span class="bg-amber-100 border-2 border-amber-300 text-amber-800 text-sm px-4 py-1.5 rounded-full font-bold">
+                    🚩 {{ activeLevel.title }}（{{ currentWordIndex + 1 }}/{{ activeLevel.words.length }}）
+                </span>
+            </div>
+
             <div class="mb-6 text-center bg-amber-50/50 p-4 rounded-2xl border-2 border-dashed border-amber-200">
                 <h3 class="text-2xl font-bold text-slate-700 leading-normal">{{ currentWord.prompt }}</h3>
                 <p class="text-base text-emerald-600 font-bold mt-2 bg-white inline-block px-4 py-1 rounded-full shadow-sm border border-emerald-100">
-                    💡 規則小提示：{{ currentWord.hint }}
+                    💡 {{ currentWord.hint }}
                 </p>
             </div>
 
-            <!-- 音量播放按鈕 -->
             <div class="flex justify-center mb-8">
                 <button @click="speak(currentWord.target)"
-                    class="bg-amber-400 hover:bg-amber-500 text-white font-bold p-8 rounded-full shadow-lg text-4xl bubble-btn animate-bounce flex items-center justify-center border-4 border-amber-200 w-24 h-24">
+                    class="bg-amber-400 hover:bg-amber-500 text-white font-bold p-8 rounded-full shadow-lg text-4xl bubble-btn border-4 border-amber-200 w-24 h-24">
                     🔊
                 </button>
             </div>
 
-            <!-- 選項按鈕區 -->
             <div class="grid grid-cols-2 gap-4 mb-6">
-                <button v-for="(option, optionIdx) in currentWord.options" :key="optionIdx" @click="checkAnswer(option)"
+                <button v-for="(option, optionIndex) in currentWord.options" :key="optionIndex"
+                    @click="checkAnswer(option)"
                     class="p-5 rounded-3xl border-4 font-bold text-2xl shadow-md text-center flex flex-col items-center justify-center space-y-2 bubble-btn"
                     :class="getOptionClass(option)">
-                    <div class="text-4xl bg-white/70 p-2 rounded-2xl w-14 h-14 flex items-center justify-center shadow-inner border border-slate-100" v-if="option.type === 'short' || option.type === 'long'">
-                        {{ option.type === 'short' ? '🐣' : '🧙‍♂️' }}
+                    <div class="text-4xl bg-white/70 p-2 rounded-2xl w-14 h-14 flex items-center justify-center">
+                        <span v-if="option.type === 'short'">🐣</span>
+                        <span v-else-if="option.type === 'long'">🧙‍♂️</span>
+                        <span v-else-if="option.type === 'silent'">🤫</span>
+                        <span v-else-if="option.type === 'th'">🗣️</span>
+                        <span v-else-if="option.type === 'syllable'">✂️</span>
+                        <span v-else>🔤</span>
                     </div>
-                    <div class="text-4xl bg-white/70 p-2 rounded-2xl w-14 h-14 flex items-center justify-center shadow-inner border border-slate-100" v-else-if="option.type === 'silent'">🤫</div>
-                    <div class="text-4xl bg-white/70 p-2 rounded-2xl w-14 h-14 flex items-center justify-center shadow-inner border border-slate-100" v-else-if="option.type === 'th'">🗣️</div>
-                    <div class="text-4xl bg-white/70 p-2 rounded-2xl w-14 h-14 flex items-center justify-center shadow-inner border border-slate-100" v-else-if="option.type === 'syllable'">✂️</div>
-                    <div class="text-2xl">{{ option.text }}</div>
-                    <div class="text-xs text-slate-500 bg-white/50 px-2 py-0.5 rounded-full" v-if="option.vowelType">{{ option.vowelType }}</div>
+                    <div>{{ option.text }}</div>
+                    <div v-if="option.vowelType" class="text-xs text-slate-500 bg-white/50 px-2 py-0.5 rounded-full">{{ option.vowelType }}</div>
                 </button>
             </div>
 
-            <!-- 答題回饋 -->
             <div v-if="feedback" class="text-center font-bold text-xl p-4 rounded-2xl mb-4 border-4 bubble-card"
                 :class="feedback.isCorrect ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : 'bg-rose-100 text-rose-700 border-rose-300'">
                 {{ feedback.message }}
             </div>
 
-            <!-- 麥克風加分挑戰 -->
             <div v-if="showMicBonus" class="bg-amber-50 border-4 border-amber-300 p-5 rounded-3xl text-center bubble-card">
                 <p class="text-amber-800 font-bold text-lg mb-2">⭐ 麥克風語音挑戰！大聲念出來：</p>
-                <div class="text-4xl font-bold text-amber-600 mb-4 bg-white py-2 px-6 rounded-2xl inline-block shadow-inner border border-amber-100">{{ currentWord.target }}</div>
-
+                <div class="text-4xl font-bold text-amber-600 mb-4 bg-white py-2 px-6 rounded-2xl inline-block">{{ currentWord.target }}</div>
                 <div class="flex justify-center space-x-3">
                     <button @click="startVoiceRecognition"
-                        class="bg-emerald-500 text-white px-6 py-3 rounded-2xl text-base font-bold shadow hover:bg-emerald-600 border-b-4 border-emerald-700 active:border-b-0 bubble-btn flex items-center space-x-2">
-                        <span>🎤</span> <span>{{ isRecording ? '聆聽中...' : '按一下念單字' }}</span>
+                        class="bg-emerald-500 text-white px-6 py-3 rounded-2xl font-bold border-b-4 border-emerald-700 bubble-btn">
+                        🎤 {{ isRecording ? '聆聽中…' : '按一下念單字' }}
                     </button>
                     <button @click="nextWord"
-                        class="bg-slate-200 text-slate-600 px-6 py-3 rounded-2xl text-base font-bold hover:bg-slate-300 border-b-4 border-slate-400 active:border-b-0 bubble-btn">
+                        class="bg-slate-200 text-slate-600 px-6 py-3 rounded-2xl font-bold border-b-4 border-slate-400 bubble-btn">
                         跳過 ➔
                     </button>
                 </div>
                 <p v-if="micResult" class="text-base mt-3 font-bold bg-white/70 py-2 rounded-xl"
-                    :class="micResult.isMatch ? 'text-emerald-600' : 'text-amber-600'">
-                    {{ micResult.text }}
-                </p>
-                <button v-if="micResult" @click="nextWord" @keydown.enter="nextWord"
-                    class="mt-4 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-2xl shadow-md text-lg border-b-4 border-emerald-700 bubble-btn">
+                    :class="micResult.isMatch ? 'text-emerald-600' : 'text-amber-600'">{{ micResult.text }}</p>
+                <button v-if="micResult" @click="nextWord"
+                    class="mt-4 w-full bg-emerald-500 text-white font-bold py-3.5 rounded-2xl border-b-4 border-emerald-700 bubble-btn">
                     繼續 ➔
                 </button>
             </div>
 
-            <!-- 下一題按鈕 -->
-            <button v-if="feedback && feedback.isCorrect && !showMicBonus" @click="nextWord"
-                class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-2xl shadow-md text-lg border-b-4 border-emerald-700 bubble-btn">
+            <button v-if="feedback?.isCorrect && !showMicBonus" @click="nextWord"
+                class="w-full bg-emerald-500 text-white font-bold py-3.5 rounded-2xl border-b-4 border-emerald-700 bubble-btn">
                 下一題 ➔
             </button>
-        </div>
+        </main>
 
-        <!-- 家長區彈出式選單 -->
         <div v-if="showParentModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-            <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border-4 border-slate-800 bubble-card">
-                <div class="flex justify-between items-center border-b pb-2">
-                    <h3 class="text-xl font-bold text-slate-800">⚙️ 家長區：自訂擴充字庫</h3>
-                    <span class="text-2xl">👩‍🏫</span>
+            <div class="bg-white rounded-3xl p-5 max-w-5xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border-4 border-slate-800">
+                <div class="flex justify-between items-center border-b pb-3 mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-800">⚙️ Supabase 字庫管理</h3>
+                        <p class="text-xs text-slate-500 mt-1">公開玩家只能讀取；管理者可以新增、修改與停用題目。</p>
+                    </div>
+                    <button @click="showParentModal = false" class="text-2xl text-slate-500 hover:text-slate-800" aria-label="關閉">✕</button>
                 </div>
-                <p class="text-sm text-slate-500 leading-relaxed">您可以在此提供 Google 試算表連結或雲端硬碟 JSON 分享網址，為您的孩子新增練習的單字卡。</p>
 
-                <div class="space-y-3 mt-4 border-t pt-4 border-b pb-4 border-slate-100">
-                    <label class="block text-sm font-bold text-slate-700">線上 JSON / 試算表題庫網址：</label>
-                    <input v-model="syncUrl" type="text" placeholder="貼上公開試算表或 JSON 網址..."
-                        class="w-full border-2 border-slate-200 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400">
-                    <button @click="syncOnlineData" :disabled="syncLoading" 
-                        class="w-full bg-emerald-500 text-white font-bold py-3 rounded-2xl hover:bg-emerald-600 disabled:opacity-50 border-b-4 border-emerald-700 bubble-btn">
-                        {{ syncLoading ? '載入中...' : '🔄 讀取並更新字庫' }}
-                    </button>
-                    <p v-if="syncMessage" class="text-sm font-bold p-2 rounded-xl text-center"
-                        :class="syncMessage.type === 'error' ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-600'">
-                        {{ syncMessage.text }}
+                <form v-if="!isAdmin" @submit.prevent="signInAdmin" class="max-w-md mx-auto space-y-4 py-8">
+                    <div class="text-center text-5xl">🔐</div>
+                    <h4 class="text-center text-lg font-bold">管理者登入</h4>
+                    <label class="block text-sm font-bold">
+                        Email
+                        <input v-model.trim="adminEmail" type="email" required autocomplete="username"
+                            class="mt-1 w-full border-2 border-slate-200 rounded-2xl px-4 py-2.5 focus:outline-none focus:border-emerald-400">
+                    </label>
+                    <label class="block text-sm font-bold">
+                        密碼
+                        <input v-model="adminPassword" type="password" required autocomplete="current-password"
+                            class="mt-1 w-full border-2 border-slate-200 rounded-2xl px-4 py-2.5 focus:outline-none focus:border-emerald-400">
+                    </label>
+                    <p v-if="authMessage" class="text-sm font-bold p-3 rounded-xl text-center"
+                        :class="authMessage.type === 'error' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'">
+                        {{ authMessage.text }}
                     </p>
-                </div>
+                    <button type="submit" :disabled="authLoading"
+                        class="w-full bg-emerald-500 text-white font-bold py-3 rounded-2xl border-b-4 border-emerald-700 bubble-btn disabled:opacity-50">
+                        {{ authLoading ? '登入中…' : '登入管理字庫' }}
+                    </button>
+                </form>
 
-                <div class="bg-slate-50 p-3 rounded-2xl max-h-40 overflow-y-auto text-sm space-y-2 border border-slate-100">
-                    <div class="text-xs text-slate-400 font-bold mb-1">目前已載入單字清單：</div>
-                    <div v-for="(word, idx) in activeLevel?.words || []" :key="idx"
-                        class="flex justify-between border-b border-slate-100 pb-1.5">
-                        <span class="font-bold text-slate-700">{{ word.target }}</span>
-                        <span class="text-slate-400 text-xs">{{ word.hint }}</span>
+                <div v-else>
+                    <div class="flex flex-wrap justify-between items-center gap-3 mb-4 bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
+                        <span class="text-sm font-bold text-emerald-800">👩‍🏫 {{ adminUser.email }}</span>
+                        <button @click="signOutAdmin" class="text-sm font-bold text-slate-600 underline">登出</button>
+                    </div>
+
+                    <p v-if="adminMessage" class="text-sm font-bold p-3 rounded-xl text-center mb-4"
+                        :class="adminMessage.type === 'error' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'">
+                        {{ adminMessage.text }}
+                    </p>
+
+                    <div v-if="adminLoading" class="text-center py-12 font-bold text-sky-600">載入完整字庫中…</div>
+
+                    <div v-else class="grid lg:grid-cols-2 gap-6">
+                        <section class="space-y-3">
+                            <div class="flex justify-between items-end gap-3">
+                                <label class="text-sm font-bold flex-1">
+                                    管理關卡
+                                    <select v-model="adminSelectedLevelId"
+                                        class="mt-1 w-full border-2 border-slate-200 rounded-xl px-3 py-2 bg-white">
+                                        <option v-for="level in adminLevels" :key="level.id" :value="level.id">{{ level.title }}</option>
+                                    </select>
+                                </label>
+                                <button @click="resetQuestionForm" class="bg-sky-100 text-sky-700 px-3 py-2 rounded-xl font-bold text-sm">＋ 新題目</button>
+                            </div>
+                            <div class="border-2 border-slate-100 rounded-2xl p-2 max-h-[58vh] overflow-y-auto space-y-2">
+                                <div v-if="!selectedAdminLevel?.words.length" class="text-center text-slate-400 py-8">這個關卡還沒有題目</div>
+                                <article v-for="question in selectedAdminLevel?.words || []" :key="question.id"
+                                    class="border rounded-xl p-3" :class="question.isPublished ? 'bg-white border-slate-200' : 'bg-slate-100 border-slate-300 opacity-70'">
+                                    <div class="flex justify-between gap-2">
+                                        <div>
+                                            <div class="font-bold">{{ question.target }}</div>
+                                            <p class="text-xs text-slate-500 mt-1">{{ question.prompt }}</p>
+                                        </div>
+                                        <span class="text-xs font-bold whitespace-nowrap" :class="question.isPublished ? 'text-emerald-600' : 'text-slate-400'">
+                                            {{ question.isPublished ? '已發布' : '已停用' }}
+                                        </span>
+                                    </div>
+                                    <div class="flex gap-2 mt-3">
+                                        <button @click="editQuestion(question)" class="text-xs font-bold bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg">編輯</button>
+                                        <button @click="toggleQuestion(question)" class="text-xs font-bold px-3 py-1.5 rounded-lg"
+                                            :class="question.isPublished ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'">
+                                            {{ question.isPublished ? '停用' : '重新發布' }}
+                                        </button>
+                                    </div>
+                                </article>
+                            </div>
+                        </section>
+
+                        <form @submit.prevent="saveQuestion" class="space-y-3 border-2 border-amber-200 bg-amber-50/40 rounded-2xl p-4">
+                            <div class="flex justify-between items-center">
+                                <h4 class="text-lg font-bold text-amber-800">{{ editingTitle }}</h4>
+                                <button v-if="questionForm.id" type="button" @click="resetQuestionForm" class="text-xs underline text-slate-500">取消編輯</button>
+                            </div>
+                            <label class="block text-sm font-bold">
+                                關卡
+                                <select v-model="questionForm.levelId" required class="mt-1 w-full border-2 border-slate-200 rounded-xl px-3 py-2 bg-white">
+                                    <option v-for="level in adminLevels" :key="level.id" :value="level.id">{{ level.title }}</option>
+                                </select>
+                            </label>
+                            <label class="block text-sm font-bold">
+                                目標單字
+                                <input v-model.trim="questionForm.target" required class="mt-1 w-full border-2 border-slate-200 rounded-xl px-3 py-2 bg-white" placeholder="例如：cat">
+                            </label>
+                            <label class="block text-sm font-bold">
+                                題目
+                                <input v-model.trim="questionForm.prompt" required class="mt-1 w-full border-2 border-slate-200 rounded-xl px-3 py-2 bg-white" placeholder="例如：哪一個是「貓咪」？">
+                            </label>
+                            <label class="block text-sm font-bold">
+                                提示
+                                <input v-model.trim="questionForm.hint" class="mt-1 w-full border-2 border-slate-200 rounded-xl px-3 py-2 bg-white">
+                            </label>
+                            <label class="block text-sm font-bold">
+                                顯示順序
+                                <input v-model.number="questionForm.sortOrder" type="number" min="0" class="mt-1 w-full border-2 border-slate-200 rounded-xl px-3 py-2 bg-white">
+                            </label>
+
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-bold">答案選項</span>
+                                    <button type="button" @click="addOption" class="text-xs font-bold text-sky-700">＋ 增加選項</button>
+                                </div>
+                                <div v-for="(option, optionIndex) in questionForm.options" :key="optionIndex"
+                                    class="grid grid-cols-[auto_1fr_auto] gap-2 items-start bg-white border border-slate-200 rounded-xl p-2">
+                                    <label class="pt-2" title="設為正確答案">
+                                        <input type="radio" name="correct-option" :checked="option.correct" @change="setCorrectOption(optionIndex)" required>
+                                    </label>
+                                    <div class="space-y-2">
+                                        <input v-model.trim="option.text" required class="w-full border rounded-lg px-2 py-1.5 text-sm" placeholder="選項文字">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <select v-model="option.type" class="border rounded-lg px-2 py-1.5 text-xs bg-white">
+                                                <option value="short">短母音</option>
+                                                <option value="long">長母音</option>
+                                                <option value="silent">不發音</option>
+                                                <option value="th">Th</option>
+                                                <option value="syllable">音節</option>
+                                                <option value="other">其他</option>
+                                            </select>
+                                            <input v-model.trim="option.vowelType" class="border rounded-lg px-2 py-1.5 text-xs" placeholder="類型說明">
+                                        </div>
+                                    </div>
+                                    <button type="button" @click="removeOption(optionIndex)" :disabled="questionForm.options.length <= 2"
+                                        class="text-rose-500 font-bold px-1 disabled:opacity-20">✕</button>
+                                </div>
+                                <p class="text-xs text-slate-500">圓點代表正確答案；每題必須且只能選一個。</p>
+                            </div>
+
+                            <label class="flex items-center gap-2 text-sm font-bold">
+                                <input v-model="questionForm.isPublished" type="checkbox">
+                                儲存後立即發布
+                            </label>
+                            <button type="submit" :disabled="saveLoading"
+                                class="w-full bg-amber-500 text-white font-bold py-3 rounded-2xl border-b-4 border-amber-700 bubble-btn disabled:opacity-50">
+                                {{ saveLoading ? '儲存中…' : (questionForm.id ? '儲存修改' : '新增題目') }}
+                            </button>
+                        </form>
                     </div>
                 </div>
-
-                <button @click="showParentModal = false"
-                    class="w-full bg-slate-800 text-white py-3 rounded-2xl font-bold border-b-4 border-slate-900 bubble-btn">
-                    關閉選單
-                </button>
             </div>
         </div>
 
-        <div v-if="showCompleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-center">
+        <div v-if="showCompleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-40">
+            <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl text-center space-y-4">
                 <div class="text-5xl">🏆</div>
                 <h3 class="text-2xl font-bold text-amber-600">恭喜通關「{{ activeLevel?.title }}」！</h3>
                 <p class="text-lg text-slate-600 font-bold">目前總星數：⭐ {{ score }}</p>
-                <button @click="showCompleteModal = false"
-                    class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-2xl shadow-md text-lg">
-                    繼續冒險 ➔
-                </button>
+                <button @click="showCompleteModal = false" class="w-full bg-emerald-500 text-white font-bold py-3 rounded-2xl">繼續冒險 ➔</button>
             </div>
         </div>
     </div>
-
-    <script>
-        const { createApp, ref, computed, watch } = Vue;
-
-        createApp({
-            setup() {
-                const loadScore = () => {
-                    try { return parseInt(localStorage.getItem('phonics_score') || '0', 10) || 0; } catch { return 0; }
-                };
-                const score = ref(loadScore());
-                watch(score, (value) => {
-                    try { localStorage.setItem('phonics_score', String(value)); } catch { /* 隱私模式等情境忽略 */ }
-                });
-
-                const currentStage = ref('menu'); // 'menu' | 'game'
-                const activeLevel = ref(null);
-                const currentWordIndex = ref(0);
-                const selectedOption = ref(null);
-                const feedback = ref(null);
-                const showMicBonus = ref(false);
-                const isRecording = ref(false);
-                const micResult = ref(null);
-                const showParentModal = ref(false);
-                const showCompleteModal = ref(false);
-
-                const syncUrl = ref('');
-                const syncLoading = ref(false);
-                const syncMessage = ref(null);
-
-                // 關卡與短長母音單字資料庫 (限定最多 2 母音發音)
-                const levels = ref([
-                    {
-                        "id": "short-vowel",
-                        "title": "1. 短母音小鎮 (CVC)",
-                        "icon": "🐣",
-                        "description": "母音被關起來了，試著找出發短音的單字！",
-                        "ruleTag": "Short Vowels (CVC)",
-                        "borderColor": "border-emerald-300",
-                        "textColor": "text-emerald-600",
-                        "words": [
-                            {
-                                "prompt": "哪一個是短母音 /æ/ 的「貓咪」？",
-                                "target": "cat",
-                                "hint": "CVC 閉音節，a 發短音 /æ/",
-                                "options": [
-                                    {
-                                        "text": "cat",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short A",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "cape",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long A",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "聽到發音，選出短母音 /ɪ/ 的「大頭針」：",
-                                "target": "pin",
-                                "hint": "i 被閉合在中間，發短音 /ɪ/",
-                                "options": [
-                                    {
-                                        "text": "pine",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long I",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "pin",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short I",
-                                        correct: true
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "選出發短母音 /ɑ/ 的「狗」：",
-                                "target": "dog",
-                                "hint": "o 發短音 /ɑ/",
-                                "options": [
-                                    {
-                                        "text": "dog",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short O",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "boat",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long O",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "選出短母音 /ɛ/ 的「床」：",
-                                "target": "bed",
-                                "hint": "e 發短音 /ɛ/",
-                                "options": [
-                                    {
-                                        "text": "bead",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long E",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "bed",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short E",
-                                        correct: true
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "選出短母音 /ʌ/ 的「杯子」：",
-                                "target": "cup",
-                                "hint": "u 發短音 /ʌ/",
-                                "options": [
-                                    {
-                                        "text": "cup",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short U",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "cube",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long U",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "選出短母音 /ɪ/ 的「豬」：",
-                                "target": "pig",
-                                "hint": "i 發短音 /ɪ/",
-                                "options": [
-                                    {
-                                        "text": "pig",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short I",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "page",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long A",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "選出短母音 /æ/ 的「地圖」：",
-                                "target": "map",
-                                "hint": "a 發短音 /æ/",
-                                "options": [
-                                    {
-                                        "text": "map",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short A",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "make",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long A",
-                                        correct: false
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "id": "magic-e",
-                        "title": "2. Magic E 魔法森林",
-                        "icon": "🧙‍♂️",
-                        "description": "字尾加上 Magic E，短母音會變身成字母本尊長音！",
-                        "ruleTag": "Short -> Long Vowel (CVCe)",
-                        "borderColor": "border-purple-300",
-                        "textColor": "text-purple-600",
-                        "words": [
-                            {
-                                "prompt": "加上 Magic E 後，從 tap (短音) 變成了？",
-                                "target": "tape",
-                                "hint": "Magic E 將力量傳給前面的 a，發長音 /eɪ/",
-                                "options": [
-                                    {
-                                        "text": "tap",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short A",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "tape",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long A",
-                                        correct: true
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "哪一個字有魔法 E，讓母音發長音 /oʊ/？",
-                                "target": "hope",
-                                "hint": "Silent E 不發音，前面 o 發字母本尊音",
-                                "options": [
-                                    {
-                                        "text": "hope",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long O",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "hop",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short O",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "哪一個是發長音 /juː/ 的「方塊」？",
-                                "target": "cube",
-                                "hint": "Magic E 讓 u 發長音 /juː/",
-                                "options": [
-                                    {
-                                        "text": "cub",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short U",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "cube",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long U",
-                                        correct: true
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "找出有 Magic E 發長音 /aɪ/ 的「躲藏」：",
-                                "target": "hide",
-                                "hint": "Magic E 讓 i 發長音 /aɪ/",
-                                "options": [
-                                    {
-                                        "text": "hide",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long I",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "hid",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short I",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "哪個是發長音 /oʊ/ 的「筆記」？",
-                                "target": "note",
-                                "hint": "Magic E 讓 o 發長音 /oʊ/",
-                                "options": [
-                                    {
-                                        "text": "not",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short O",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "note",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long O",
-                                        correct: true
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "哪個是發長音 /eɪ/ 的「相同」？",
-                                "target": "same",
-                                "hint": "Magic E 讓 a 發長音 /eɪ/",
-                                "options": [
-                                    {
-                                        "text": "same",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long A",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "Sam",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short A",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "哪個是發長音 /aɪ/ 的「風箏」？",
-                                "target": "kite",
-                                "hint": "Magic E 讓 i 發長音 /aɪ/",
-                                "options": [
-                                    {
-                                        "text": "kit",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short I",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "kite",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long I",
-                                        correct: true
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "id": "vowel-teams",
-                        "title": "3. 雙母音長音隊 (Vowel Teams)",
-                        "icon": "⛵",
-                        "description": "兩個母音走在一起，第一個發本尊長音！",
-                        "ruleTag": "Long Vowels (ai, oa, ee)",
-                        "borderColor": "border-blue-300",
-                        "textColor": "text-blue-600",
-                        "words": [
-                            {
-                                "prompt": "選出包含雙母音長音 /oʊ/ 的「小船」：",
-                                "target": "boat",
-                                "hint": "oa 組合：第一個字母 o 發長音，a 不發音",
-                                "options": [
-                                    {
-                                        "text": "boat",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long O (oa)",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "bat",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short A",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "選出雙母音 ai 發長音 /eɪ/ 的「下雨」：",
-                                "target": "rain",
-                                "hint": "ai 組合：a 發長音，i 不發音",
-                                "options": [
-                                    {
-                                        "text": "ran",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short A",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "rain",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long A (ai)",
-                                        correct: true
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "選出雙母音 ee 發長音 /iː/ 的「樹」：",
-                                "target": "tree",
-                                "hint": "ee 組合：e 發長音",
-                                "options": [
-                                    {
-                                        "text": "tree",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long E (ee)",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "try",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long I",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "選出 ow 發長音 /oʊ/ 的「雪」：",
-                                "target": "snow",
-                                "hint": "ow 在字尾常發長音 /oʊ/",
-                                "options": [
-                                    {
-                                        "text": "snob",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short O",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "snow",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long O (ow)",
-                                        correct: true
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "選出 ie 發長音 /aɪ/ 的「派」：",
-                                "target": "pie",
-                                "hint": "ie 組合：i 發長音，e 不發音",
-                                "options": [
-                                    {
-                                        "text": "pie",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long I (ie)",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "pin",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short I",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "選出 ea 發長音 /iː/ 的「座位」：",
-                                "target": "seat",
-                                "hint": "ea 組合：e 發長音，a 不發音",
-                                "options": [
-                                    {
-                                        "text": "sat",
-                                        "type": "short",
-                                        "vowelType": "短母音 Short A",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "seat",
-                                        "type": "long",
-                                        "vowelType": "長母音 Long E (ea)",
-                                        correct: true
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "id": "world-3-silent-th",
-                        "title": "4. 特務子音洞窟 (Silent/Th)",
-                        "icon": "🕵️",
-                        "description": "找出睡著不發音的特務字母，並分辨 Th 是有聲還無聲！",
-                        "ruleTag": "Silent Letters & Th",
-                        "borderColor": "border-slate-400",
-                        "textColor": "text-slate-700",
-                        "words": [
-                            {
-                                "prompt": "找出單字「knee」中睡著不發音的字母：",
-                                "target": "knee",
-                                "hint": "kn 開頭時，k 通常不發音",
-                                "options": [
-                                    {
-                                        "text": "k",
-                                        "type": "silent",
-                                        "vowelType": "不發音",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "n",
-                                        "type": "silent",
-                                        "vowelType": "發音字母",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "e",
-                                        "type": "silent",
-                                        "vowelType": "發音字母",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "找出單字「knife」中睡著不發音的字母：",
-                                "target": "knife",
-                                "hint": "kn 開頭，k 不發音",
-                                "options": [
-                                    {
-                                        "text": "k",
-                                        "type": "silent",
-                                        "vowelType": "不發音",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "n",
-                                        "type": "silent",
-                                        "vowelType": "發音字母",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "f",
-                                        "type": "silent",
-                                        "vowelType": "發音字母",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "找出單字「write」中睡著不發音的字母：",
-                                "target": "write",
-                                "hint": "wr 開頭，w 不發音",
-                                "options": [
-                                    {
-                                        "text": "w",
-                                        "type": "silent",
-                                        "vowelType": "不發音",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "r",
-                                        "type": "silent",
-                                        "vowelType": "發音字母",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "t",
-                                        "type": "silent",
-                                        "vowelType": "發音字母",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "找出單字「climb」中睡著不發音的字母：",
-                                "target": "climb",
-                                "hint": "mb 結尾時，b 通常不發音",
-                                "options": [
-                                    {
-                                        "text": "m",
-                                        "type": "silent",
-                                        "vowelType": "發音字母",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "b",
-                                        "type": "silent",
-                                        "vowelType": "不發音",
-                                        correct: true
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "聽音辨別，單字「think」的 th 是：",
-                                "target": "think",
-                                "hint": "think 只有純噴氣，喉嚨不震動喔",
-                                "options": [
-                                    {
-                                        "text": "純噴氣 (Unvoiced)",
-                                        "type": "th",
-                                        "vowelType": "無聲子音",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "喉嚨震動 (Voiced)",
-                                        "type": "th",
-                                        "vowelType": "有聲子音",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "聽音辨別，單字「this」的 th 是：",
-                                "target": "this",
-                                "hint": "this 會震動喉嚨喔",
-                                "options": [
-                                    {
-                                        "text": "純噴氣 (Unvoiced)",
-                                        "type": "th",
-                                        "vowelType": "無聲子音",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "喉嚨震動 (Voiced)",
-                                        "type": "th",
-                                        "vowelType": "有聲子音",
-                                        correct: true
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "id": "world-4-syllables",
-                        "title": "5. 音節解構城堡",
-                        "icon": "🏰",
-                        "description": "利用手術刀將單字切開，並算出單字的音節數！",
-                        "ruleTag": "Syllables Cutting & Counting",
-                        "borderColor": "border-pink-300",
-                        "textColor": "text-pink-600",
-                        "words": [
-                            {
-                                "prompt": "「cape」有幾個母音發音 (音節)？",
-                                "target": "cape",
-                                "hint": "Magic E 的 e 不發音，只有 a 發長音",
-                                "options": [
-                                    {
-                                        "text": "1 音節",
-                                        "type": "syllable",
-                                        "vowelType": "單音節",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "2 音節",
-                                        "type": "syllable",
-                                        "vowelType": "雙音節",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "「tiger」有幾個母音發音 (音節)？",
-                                "target": "tiger",
-                                "hint": "i 跟 er 都有發出母音的聲音",
-                                "options": [
-                                    {
-                                        "text": "1 音節",
-                                        "type": "syllable",
-                                        "vowelType": "單音節",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "2 音節",
-                                        "type": "syllable",
-                                        "vowelType": "雙音節",
-                                        correct: true
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "「kitten」有幾個母音發音 (音節)？",
-                                "target": "kitten",
-                                "hint": "i 跟 e 都有發出母音的聲音",
-                                "options": [
-                                    {
-                                        "text": "1 音節",
-                                        "type": "syllable",
-                                        "vowelType": "單音節",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "2 音節",
-                                        "type": "syllable",
-                                        "vowelType": "雙音節",
-                                        correct: true
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "選出正確的手術刀切法 (tiger)：",
-                                "target": "tiger",
-                                "hint": "tiger 的 i 發長音 (開音節)，所以切在母音 i 後面",
-                                "options": [
-                                    {
-                                        "text": "ti - ger",
-                                        "type": "syllable",
-                                        "vowelType": "開音節 + 音節",
-                                        correct: true
-                                    },
-                                    {
-                                        "text": "tig - er",
-                                        "type": "syllable",
-                                        "vowelType": "閉音節 + 音節",
-                                        correct: false
-                                    }
-                                ]
-                            },
-                            {
-                                "prompt": "選出正確的手術刀切法 (kitten)：",
-                                "target": "kitten",
-                                "hint": "kitten 的 i 發短音 (閉音節)，所以切在子音 t 後面",
-                                "options": [
-                                    {
-                                        "text": "ki - tten",
-                                        "type": "syllable",
-                                        "vowelType": "開音節 + 音節",
-                                        correct: false
-                                    },
-                                    {
-                                        "text": "kit - ten",
-                                        "type": "syllable",
-                                        "vowelType": "閉音節 + 音節",
-                                        correct: true
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]);
-
-                const currentWord = computed(() => activeLevel.value?.words[currentWordIndex.value]);
-
-                const shuffleOptions = (arr) => {
-                    const options = arr.slice();
-                    for (let i = options.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [options[i], options[j]] = [options[j], options[i]];
-                    }
-                    return options;
-                };
-
-                const startLevel = (level) => {
-                    activeLevel.value = level;
-                    currentWordIndex.value = 0;
-                    currentStage.value = 'game';
-                    resetTurn();
-                    if (currentWord.value) {
-                        currentWord.value.options = shuffleOptions(currentWord.value.options);
-                        speak(currentWord.value.target);
-                    }
-                };
-
-                const resetTurn = () => {
-                    selectedOption.value = null;
-                    feedback.value = null;
-                    showMicBonus.value = false;
-                    micResult.value = null;
-                    isRecording.value = false;
-                };
-
-                // TTS 播放發音
-                let englishVoice = null;
-                const pickEnglishVoice = () => {
-                    if (englishVoice) return englishVoice;
-                    const voices = ('speechSynthesis' in window) ? window.speechSynthesis.getVoices() : [];
-                    englishVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en-us')) ||
-                        voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en')) || null;
-                    return englishVoice;
-                };
-                if ('speechSynthesis' in window && 'onvoiceschanged' in window.speechSynthesis) {
-                    window.speechSynthesis.onvoiceschanged = () => {
-                        englishVoice = null;
-                        pickEnglishVoice();
-                    };
-                }
-
-                const speak = (text) => {
-                    if ('speechSynthesis' in window) {
-                        window.speechSynthesis.cancel();
-                        const utterance = new SpeechSynthesisUtterance(text);
-                        utterance.lang = 'en-US';
-                        utterance.rate = 0.8; // 稍微放慢速度適合小朋友
-                        const voice = pickEnglishVoice();
-                        if (voice) utterance.voice = voice;
-                        window.speechSynthesis.speak(utterance);
-                    }
-                };
-
-                // 答題判斷
-                const checkAnswer = (option) => {
-                    selectedOption.value = option;
-
-                    if (option.correct) {
-                        speak(option.text);
-                        feedback.value = { isCorrect: true, message: '🎉 太棒了！答對了！' };
-                        score.value += 10;
-                        showMicBonus.value = true; // 觸發語音加分題
-                    } else {
-                        speak(currentWord.value.target); // 答錯時改播正確發音，方便對比練習
-                        feedback.value = { isCorrect: false, message: '❌ 再試一次！注意看看綠色框框的正確答案。' };
-                    }
-                };
-
-                const getOptionClass = (option) => {
-                    if (!selectedOption.value) return 'border-slate-200 bg-white hover:bg-amber-50';
-                    // 答錯後用綠色框提示正確答案，引導小朋友
-                    if (!feedback.value?.isCorrect && option.correct) {
-                        return 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-300';
-                    }
-                    if (option === selectedOption.value) {
-                        return option.correct ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-rose-500 bg-rose-50 text-rose-700';
-                    }
-                    return 'border-slate-100 opacity-50';
-                };
-
-                const nextWord = () => {
-                    if (currentWordIndex.value < activeLevel.value.words.length - 1) {
-                        currentWordIndex.value++;
-                        resetTurn();
-                        if (currentWord.value) {
-                            currentWord.value.options = shuffleOptions(currentWord.value.options);
-                            speak(currentWord.value.target);
-                        }
-                    } else {
-                        currentStage.value = 'menu';
-                        showCompleteModal.value = true;
-                    }
-                };
-
-                // Web Speech API 語音辨識加分
-                const startVoiceRecognition = () => {
-                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    if (!SpeechRecognition) {
-                        alert('您的瀏覽器不支援麥克風辨識，已為您跳過此加分題！');
-                        nextWord();
-                        return;
-                    }
-
-                    if (isRecording.value) return; // 避免重複點擊開啟多個麥克風
-
-                    const recognition = new SpeechRecognition();
-                    recognition.lang = 'en-US';
-                    recognition.interimResults = false;
-
-                    isRecording.value = true;
-                    micResult.value = null;
-
-                    recognition.start();
-
-                    recognition.onresult = (event) => {
-                        const spokenText = event.results[0][0].transcript.toLowerCase().trim();
-                        const targetText = currentWord.value.target.toLowerCase();
-                        isRecording.value = false;
-
-                        if (spokenText.includes(targetText) || targetText.includes(spokenText)) {
-                            micResult.value = { isMatch: true, text: `🌟 發音超標準！聽到了「${spokenText}」，額外 +5 分！` };
-                            score.value += 5;
-                        } else {
-                            micResult.value = { isMatch: false, text: `😅 聽到的是「${spokenText}」，再接再勵！` };
-                        }
-                    };
-
-                    recognition.onerror = () => {
-                        isRecording.value = false;
-                        micResult.value = { isMatch: false, text: '收音沒聽清楚，可以再試一次或點跳過喔！' };
-                    };
-
-                    recognition.onend = () => {
-                        isRecording.value = false; // 避免辨識結束時 isRecording 卡在 true
-                    };
-                };
-
-                // 將 Google 網址轉換為可直接存取的網址
-                const convertGoogleUrl = (url) => {
-                    // Google Sheets：支援分享連結與 edit/pubhtml 等格式
-                    const sheetsMatch = url.match(/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
-                    if (sheetsMatch) {
-                        const sheetId = sheetsMatch[1];
-                        // 取出 gid（分頁 ID），預設為 0
-                        const gidMatch = url.match(/gid=(\d+)/);
-                        const gid = gidMatch ? gidMatch[1] : '0';
-                        return { type: 'sheets', url: `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}` };
-                    }
-                    // Google Drive：支援 /file/d/ID 和 ?id=ID 兩種格式
-                    const driveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) ||
-                        url.match(/drive\.google\.com\/.*[?&]id=([a-zA-Z0-9_-]+)/);
-                    if (driveMatch) {
-                        const fileId = driveMatch[1];
-                        return { type: 'json', url: `https://drive.google.com/uc?export=download&id=${fileId}` };
-                    }
-                    // 一般網址，直接使用
-                    return { type: 'json', url };
-                };
-
-                // 解析 Google Sheets CSV 為關卡資料陣列
-                // 表格欄位格式：level_id | prompt | target | hint | option_text | option_type | option_vowelType | correct
-                const parseCsvToLevels = (csvText) => {
-                    const lines = csvText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                    if (lines.length < 2) throw new Error('CSV 至少需要標題列和一列資料');
-
-                    // 解析 CSV 列（處理含逗號的引號欄位）
-                    const parseCsvLine = (line) => {
-                        const result = [];
-                        let current = '';
-                        let inQuotes = false;
-                        for (let i = 0; i < line.length; i++) {
-                            if (line[i] === '"') {
-                                if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
-                                else { inQuotes = !inQuotes; }
-                            } else if (line[i] === ',' && !inQuotes) {
-                                result.push(current.trim());
-                                current = '';
-                            } else {
-                                current += line[i];
-                            }
-                        }
-                        result.push(current.trim());
-                        return result;
-                    };
-
-                    const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase().replace(/\s+/g, '_'));
-                    const iLevel = headers.indexOf('level_id');
-                    const iPrompt = headers.indexOf('prompt');
-                    const iTarget = headers.indexOf('target');
-                    const iHint = headers.indexOf('hint');
-                    const iOptText = headers.indexOf('option_text');
-                    const iOptType = headers.indexOf('option_type');
-                    const iOptVowel = headers.indexOf('option_voweltype');
-                    const iCorrect = headers.indexOf('correct');
-
-                    if (iLevel === -1 || iTarget === -1 || iOptText === -1 || iCorrect === -1) {
-                        throw new Error('CSV 缺少必要欄位：level_id, target, option_text, correct');
-                    }
-
-                    // 依 level_id + target 分組
-                    const levelMap = {};
-                    const wordMap = {};
-
-                    for (let i = 1; i < lines.length; i++) {
-                        const cols = parseCsvLine(lines[i]);
-                        const levelId = cols[iLevel] || '';
-                        const target = cols[iTarget] || '';
-                        const key = `${levelId}::${target}`;
-
-                        if (!levelId || !target) continue;
-
-                        if (!levelMap[levelId]) levelMap[levelId] = [];
-
-                        if (!wordMap[key]) {
-                            const word = {
-                                prompt: cols[iPrompt] || `選出「${target}」：`,
-                                target: target,
-                                hint: cols[iHint] || '',
-                                options: []
-                            };
-                            wordMap[key] = word;
-                            levelMap[levelId].push(word);
-                        }
-
-                        wordMap[key].options.push({
-                            text: cols[iOptText] || '',
-                            type: cols[iOptType] || 'short',
-                            vowelType: cols[iOptVowel] || '',
-                            correct: (cols[iCorrect] || '').toLowerCase() === 'true'
-                        });
-                    }
-
-                    return Object.entries(levelMap).map(([id, words]) => ({ id, words }));
-                };
-
-                // 合併題庫資料（同 ID 合併新增單字、不同 ID 新增關卡），並避免重複加入相同單字
-                const mergeLevelData = (data) => {
-                    let addedWords = 0;
-                    let newLevels = 0;
-                    data.forEach(newLevel => {
-                        const existing = levels.value.find(l => l.id === newLevel.id);
-                        if (existing && newLevel.words) {
-                            const existingTargets = new Set(existing.words.map(w => w.target));
-                            const fresh = newLevel.words.filter(w => w && w.target && !existingTargets.has(w.target));
-                            existing.words.push(...fresh);
-                            addedWords += fresh.length;
-                        } else if (!existing) {
-                            const fresh = (newLevel.words || []).filter(w => w && w.target);
-                            levels.value.push({ ...newLevel, words: fresh });
-                            newLevels++;
-                            addedWords += fresh.length;
-                        }
-                    });
-                    return { addedWords, newLevels };
-                };
-
-                // 啟動時自動嘗試載入 sample_words.json，與「家長區」共用同一套合併機制。
-                // 用 file:// 直接開啟時 fetch 會失敗，將自動沿用內建字庫，不影響使用。
-                const loadLocalSample = async () => {
-                    try {
-                        const response = await fetch('sample_words.json', { cache: 'no-store' });
-                        if (!response.ok) return;
-                        const data = await response.json();
-                        if (Array.isArray(data)) mergeLevelData(data);
-                    } catch { /* 忽略，使用內建字庫 */ }
-                };
-                loadLocalSample();
-
-                const syncOnlineData = async () => {
-                    if (!syncUrl.value) {
-                        syncMessage.value = { type: 'error', text: '請輸入有效的網址' };
-                        return;
-                    }
-                    syncLoading.value = true;
-                    syncMessage.value = null;
-                    try {
-                        const { type, url } = convertGoogleUrl(syncUrl.value.trim());
-                        const response = await fetch(url);
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                        let data;
-                        if (type === 'sheets') {
-                            // Google Sheets → 解析 CSV
-                            const csvText = await response.text();
-                            data = parseCsvToLevels(csvText);
-                        } else {
-                            // JSON 檔案（Google Drive 或一般網址）
-                            const text = await response.text();
-                            data = JSON.parse(text);
-                        }
-
-                        if (Array.isArray(data)) {
-                            const { addedWords, newLevels } = mergeLevelData(data);
-                            syncMessage.value = { type: 'success', text: `✅ 字庫擴充成功！新增 ${addedWords} 題${newLevels > 0 ? `，${newLevels} 個新關卡` : ''}` };
-                            syncUrl.value = '';
-                        } else {
-                            throw new Error('資料格式不正確，應為關卡陣列');
-                        }
-                    } catch (error) {
-                        console.error(error);
-                        syncMessage.value = { type: 'error', text: `讀取失敗：${error.message}。請確認網址正確，且檔案已設為「知道連結的人都能查看」。` };
-                    } finally {
-                        syncLoading.value = false;
-                    }
-                };
-
-                return {
-                    syncUrl,
-                    syncLoading,
-                    syncMessage,
-                    syncOnlineData,
-                    score,
-                    currentStage,
-                    levels,
-                    activeLevel,
-                    currentWordIndex,
-                    currentWord,
-                    selectedOption,
-                    feedback,
-                    showMicBonus,
-                    isRecording,
-                    micResult,
-                    showParentModal,
-                    showCompleteModal,
-                    startLevel,
-                    speak,
-                    checkAnswer,
-                    getOptionClass,
-                    nextWord,
-                    startVoiceRecognition
-                };
-            }
-        }).mount('#app');
-    </script>
+    <script src="app.js"></script>
 </body>
-
 </html>
