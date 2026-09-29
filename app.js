@@ -1,4 +1,4 @@
-const { createApp, ref, computed, watch, onMounted } = Vue;
+const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
 const guideData = window.PHONICS_GUIDE || {
     title: '發音規則學堂',
     subtitle: '目前沒有可顯示的規則內容。',
@@ -108,6 +108,26 @@ createApp({
         });
         const getGuideRule = (ruleId) => guideRuleDetails.value.find((rule) => rule.id === ruleId) || null;
         const guideExamples = (ruleId) => getGuideRule(ruleId)?.examples || [];
+        const ruleExamplePreview = (rule) => (rule?.examples || [])
+            .slice(0, 3)
+            .map((example) => example.word)
+            .join(' · ');
+        const watchOutKindLabel = (kind) => ({
+            accent: '口音差異',
+            exception: '常見例外',
+            variation: '讀音變化',
+            position: '位置線索',
+            caution: '別硬套規則'
+        })[kind] || '補充提醒';
+        let guideScrollPosition = 0;
+
+        const scrollPageTo = (top) => nextTick(() => {
+            window.scrollTo({ top, behavior: 'auto' });
+        });
+
+        const rememberGuidePosition = () => {
+            if (currentStage.value === 'guide') guideScrollPosition = window.scrollY;
+        };
 
         const friendlyError = (error) => {
             if (!error) return '發生未知錯誤';
@@ -219,6 +239,8 @@ createApp({
         const openGuide = () => {
             if ('speechSynthesis' in window) window.speechSynthesis.cancel();
             currentStage.value = 'guide';
+            guideScrollPosition = 0;
+            scrollPageTo(0);
         };
 
         const openLesson = (stageId) => {
@@ -226,8 +248,10 @@ createApp({
             if (!stage) return;
             selectedLessonStageId.value = stage.id;
             lessonQuizAnswer.value = '';
+            rememberGuidePosition();
             if ('speechSynthesis' in window) window.speechSynthesis.cancel();
             currentStage.value = 'guide-lesson';
+            scrollPageTo(0);
         };
 
         const answerLessonQuiz = (answerId) => {
@@ -240,8 +264,10 @@ createApp({
             if (!rule) return;
             selectedGuideRuleId.value = rule.id;
             selectedGuideExampleWord.value = rule.examples?.[0]?.word || '';
+            rememberGuidePosition();
             if ('speechSynthesis' in window) window.speechSynthesis.cancel();
             currentStage.value = 'guide-detail';
+            scrollPageTo(0);
         };
 
         const openGuideExample = (ruleId, word) => {
@@ -249,13 +275,16 @@ createApp({
             if (!rule) return;
             selectedGuideRuleId.value = rule.id;
             selectedGuideExampleWord.value = word;
+            rememberGuidePosition();
             if ('speechSynthesis' in window) window.speechSynthesis.cancel();
             currentStage.value = 'guide-detail';
+            scrollPageTo(0);
         };
 
         const backToGuide = () => {
             if ('speechSynthesis' in window) window.speechSynthesis.cancel();
             currentStage.value = 'guide';
+            scrollPageTo(guideScrollPosition);
         };
 
         const backToMenu = () => {
@@ -429,7 +458,7 @@ createApp({
 
         return {
             score, currentStage, levels, activeLevel, currentWordIndex, currentWord,
-            guideData, guideTheme, guideExamples, selectedGuideRule, selectedGuideExample,
+            guideData, guideTheme, guideExamples, ruleExamplePreview, watchOutKindLabel, selectedGuideRule, selectedGuideExample,
             selectedLessonStage, lessonQuizAnswer, openGuide, openLesson, answerLessonQuiz,
             openGuideRule, openGuideExample, backToGuide, backToMenu,
             selectedOption, feedback, showMicBonus, isRecording, micResult,

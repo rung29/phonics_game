@@ -71,6 +71,11 @@ const phonicsGuide = {
                 { word: 'top', ipa: '/tɑp/', meaning: '頂端', icon: '🔝', syllables: 't-o-p', focus: '3 個音', note: 'o 被 t 和 p 關住，發短音。' },
                 { word: 'ship', ipa: '/ʃɪp/', meaning: '船', icon: '🚢', syllables: 'sh-i-p', focus: 'sh 是一隊', note: 'sh 代表一個聲音 /ʃ/。' }
             ],
+            watchOuts: [
+                { kind: 'variation', label: '一個字母不一定只代表一個音', words: 'c: cat /k/、city /s/；g: go /g/、giant /dʒ/', note: '先學最常見的字母音，再依後面的字母和所在位置修正。' },
+                { kind: 'variation', label: '兩個字母也可能只有一個音', words: 'ship、chat、thin、ring', note: 'sh、ch、th、ng 要先視為拼字小隊，不能按照字母數量計算聲音。' },
+                { kind: 'caution', label: '字母數不等於音素數', words: 'box = /b/ /ɑ/ /k/ /s/；ship = /ʃ/ /ɪ/ /p/', note: 'x 常代表 /ks/ 兩個音；sh 雖有兩個字母，通常只代表 /ʃ/ 一個音。' }
+            ],
             contrast: {
                 title: '拆音與合音是同一條路的兩個方向',
                 text: '拆音幫助拼讀與拼字，合音幫助把看到的字讀出來。',
@@ -144,6 +149,11 @@ const phonicsGuide = {
                 { word: 'frog', ipa: '/frɑɡ/', meaning: '青蛙', icon: '🐸', syllables: 'f-r-o-g', focus: 'fr 是 blend', note: 'f 和 r 都要保留自己的聲音。' },
                 { word: 'ring', ipa: '/rɪŋ/', meaning: '戒指', icon: '💍', syllables: 'r-i-ng', focus: 'ng → /ŋ/', note: 'ng 是常見的字尾鼻音。' }
             ],
+            watchOuts: [
+                { kind: 'variation', label: 'th 有清音和濁音兩種', words: 'thin、thumb → /θ/；this、that → /ð/', note: '兩種都寫 th；先聽喉嚨有沒有振動，再決定聲音。' },
+                { kind: 'exception', label: 'ch 不一定發 /tʃ/', words: 'school、chorus → /k/；chef、machine → /ʃ/', note: 'chair 的 /tʃ/ 最常見，但來源不同的字可能使用 /k/ 或 /ʃ/。' },
+                { kind: 'variation', label: 'ng 和 nk 的尾音不同', words: 'ring、song → /ŋ/；pink、bank → /ŋk/', note: 'nk 通常還會聽到最後的 /k/；n 在 k 前常轉成 /ŋ/。' }
+            ],
             contrast: {
                 title: '一隊一音，和每個音都出場',
                 text: '看到子音組合時，先判斷它是 digraph 還是 blend。',
@@ -214,12 +224,17 @@ const phonicsGuide = {
                 { word: 'puff', ipa: '/pʌf/', meaning: '一口氣／吹氣', icon: '💨', syllables: 'puff', focus: 'ff → /f/', note: '短母音後的字尾 f 常雙寫。' },
                 { word: 'buzz', ipa: '/bʌz/', meaning: '嗡嗡聲', icon: '🐝', syllables: 'buzz', focus: 'zz → /z/', note: '短母音後的字尾 z 常雙寫。' }
             ],
+            watchOuts: [
+                { kind: 'exception', label: 'tch 有明確的常見例外', words: 'rich、which、much、such', note: '它們雖然是單一短母音後的 /tʃ/，仍寫 ch，不寫 tch。' },
+                { kind: 'position', label: '/dʒ/ 不只寫 dge', words: 'badge、bridge；age、huge；giant、magic', note: '短母音字尾常用 dge；其他位置也可能寫 ge 或 g，要一起觀察位置和前後字母。' },
+                { kind: 'exception', label: 'FLOSS 不是每個短字都雙寫', words: 'if、pal、us、bus、yes、his、was', note: 'ff、ll、ss、zz 是高頻方向，不是絕對公式；尤其字尾 s 發 /z/ 時常不雙寫。' }
+            ],
             contrast: {
                 title: '同一個聲音，不同位置有不同拼法',
                 text: '字尾規則不只在讀音，也是在幫助我們選擇寫法。',
                 pairs: [
                     { shortWord: 'back', shortIpa: '/bæk/', longWord: 'bake', longIpa: '/beɪk/', hint: '短母音後常用 ck；長母音後常用 k' },
-                    { shortWord: 'match', shortIpa: '/mætʃ/', longWord: 'much', longIpa: '/mʌtʃ/', hint: 'tch 常跟在短母音後；其他位置可能用 ch' }
+                    { shortWord: 'match', shortIpa: '/mætʃ/', longWord: 'much', longIpa: '/mʌtʃ/', hint: 'match 依規則用 tch；much 是短母音後仍用 ch 的常見例外。' }
                 ]
             },
             quiz: {
@@ -284,6 +299,11 @@ const phonicsGuide = {
                 { word: 'hope', ipa: '/hoʊp/', meaning: '希望', icon: '🌟', syllables: 'hope', focus: 'o-e → /oʊ/', note: 'o-e 是常見的長 o 拼法。' },
                 { word: 'cube', ipa: '/kjuːb/', meaning: '立方體', icon: '🧊', syllables: 'cube', focus: 'u-e → /juː/', note: 'u-e 常發 /juː/ 或 /uː/。' },
                 { word: 'me', ipa: '/miː/', meaning: '我', icon: '🙋', syllables: 'me', focus: '開音節 → /iː/', note: '音節以母音結尾，e 可以自由發長音。' }
+            ],
+            watchOuts: [
+                { kind: 'exception', label: '字尾 e 不一定會製造長母音', words: 'have、give、live、love', note: '最後的 e 多半不發音，但前面的母音仍可能是短音或其他聲音。' },
+                { kind: 'exception', label: 'o-e 也可能發 /ʌ/', words: 'come、some、done、none', note: '這些高頻字不能套 hope 的 /oʊ/，適合當作一個例外字族記憶。' },
+                { kind: 'variation', label: 'u-e 有兩個常見方向', words: 'cube、mute → /juː/；rule、June → /uː/', note: '是否保留 /j/ 會受前方子音與口音影響，兩種都屬長 u 家族。' }
             ],
             contrast: {
                 title: '短音加一扇魔法門',
@@ -356,6 +376,11 @@ const phonicsGuide = {
                 { word: 'night', ipa: '/naɪt/', meaning: '夜晚', icon: '🌙', syllables: 'night', focus: 'igh → /aɪ/', note: 'igh 常表示長 i，gh 不另外發音。' },
                 { word: 'day', ipa: '/deɪ/', meaning: '白天', icon: '🌞', syllables: 'day', focus: 'ay → /eɪ/', note: 'ay 常出現在字尾，發長 a。' }
             ],
+            watchOuts: [
+                { kind: 'variation', label: 'ea 至少有三個常見讀法', words: 'team /iː/；bread /ɛ/；great /eɪ/', note: '先學高頻字族，不要把所有 ea 都讀成長 e。' },
+                { kind: 'variation', label: 'ow 有兩個主要家族', words: 'snow、grow → /oʊ/；cow、town → /aʊ/', note: '相同拼法可能是長 o，也可能是滑動母音 /aʊ/。' },
+                { kind: 'position', label: 'ai/oi 和 ay/oy 常依位置分工', words: 'rain、coin；day、toy', note: 'ai、oi 幾乎不放在英文單字結尾；字尾或音節尾通常使用 ay、oy。' }
+            ],
             contrast: {
                 title: '同一個長音，可以有不同隊伍',
                 text: '先聽聲音，再觀察是哪一組字母合作完成它。',
@@ -423,18 +448,23 @@ const phonicsGuide = {
                 }
             ],
             examples: [
-                { word: 'car', ipa: '/kɑːr/', meaning: '汽車', icon: '🚗', syllables: 'car', focus: 'ar → /ɑːr/', note: 'r 影響 a 的聲音。' },
-                { word: 'fork', ipa: '/fɔːrk/', meaning: '叉子', icon: '🍴', syllables: 'fork', focus: 'or → /ɔːr/', note: 'or 是常見的 Bossy R 家族。' },
-                { word: 'bird', ipa: '/bɝːd/', meaning: '鳥', icon: '🐦', syllables: 'bird', focus: 'ir → /ɝː/', note: 'ir 受到 r 影響，不能當作一般短 i。' },
-                { word: 'turn', ipa: '/tɝːn/', meaning: '轉彎', icon: '↩️', syllables: 'turn', focus: 'ur → /ɝː/', note: 'ur 常和 er、ir 有相近的 r-controlled 聲音。' },
-                { word: 'star', ipa: '/stɑːr/', meaning: '星星', icon: '⭐', syllables: 'star', focus: 'ar → /ɑːr/', note: 'st 是 blend，ar 是 Bossy R。' }
+                { word: 'car', ipa: '/kɑr/', meaning: '汽車', icon: '🚗', syllables: 'car', focus: 'ar → /ɑr/', note: 'r 影響 a 的聲音。' },
+                { word: 'fork', ipa: '/fɔrk/', meaning: '叉子', icon: '🍴', syllables: 'fork', focus: 'or → /ɔr/', note: 'or 是常見的 Bossy R 家族。' },
+                { word: 'bird', ipa: '/bɝd/', meaning: '鳥', icon: '🐦', syllables: 'bird', focus: 'ir → /ɝ/', note: 'ir 受到 r 影響，不能當作一般短 i。' },
+                { word: 'turn', ipa: '/tɝn/', meaning: '轉彎', icon: '↩️', syllables: 'turn', focus: 'ur → /ɝ/', note: 'ur 常和 er、ir 有相近的 r-controlled 聲音。' },
+                { word: 'star', ipa: '/stɑr/', meaning: '星星', icon: '⭐', syllables: 'star', focus: 'ar → /ɑr/', note: 'st 是 blend，ar 是 Bossy R。' }
+            ],
+            watchOuts: [
+                { kind: 'variation', label: 'er、ir、ur 在美式常靠得很近', words: 'her、bird、turn → /ɝ/（重讀）', note: '拼法不同但核心 r-controlled 聲音相近，需搭配字形記憶。' },
+                { kind: 'exception', label: 'w 會改變後面的 r-controlled 家族', words: 'word、work、worm；war、warm', note: 'wor 常不像 fork 的 /ɔr/；war 也不像 car 的 /ɑr/，要分成常見字族。' },
+                { kind: 'variation', label: 'ear 不是只有一種聲音', words: 'hear、bear、learn、heart', note: 'ear 可能落入不同母音家族，看到時先用熟悉單字確認，不要硬套單一公式。' }
             ],
             contrast: {
                 title: 'R 會把母音拉進另一個家族',
                 text: '把普通母音和 R-controlled vowel 放在一起聽，感受聲音不是單純變長。',
                 pairs: [
-                    { shortWord: 'cap', shortIpa: '/kæp/', longWord: 'car', longIpa: '/kɑːr/', hint: 'a 遇到 r 後變成 ar 家族' },
-                    { shortWord: 'hop', shortIpa: '/hɑp/', longWord: 'fork', longIpa: '/fɔːrk/', hint: 'or 不是一般的 o 短音' }
+                    { shortWord: 'cap', shortIpa: '/kæp/', longWord: 'car', longIpa: '/kɑr/', hint: 'a 遇到 r 後變成 ar 家族' },
+                    { shortWord: 'hop', shortIpa: '/hɑp/', longWord: 'fork', longIpa: '/fɔrk/', hint: 'or 不是一般的 o 短音' }
                 ]
             },
             quiz: {
@@ -456,9 +486,9 @@ const phonicsGuide = {
             subtitle: 'Diphthongs · Special Vowel Teams',
             theme: 'amber',
             image: 'assets/guide/stage-8-diphthongs.png',
-            imageAlt: '彩虹角色、硬幣、玩具、雲、房子、月亮與書本插圖',
-            intro: '有些母音聲音不是停在一個位置，而是從一個口形滑到另一個口形。',
-            goal: '分辨 oi/oy、ou/ow、oo 等常見滑動或特殊母音組合。',
+            imageAlt: '彩虹角色、硬幣、玩具、雲、鋸子、月亮與書本插圖',
+            intro: '長母音教學分類是 phonics 的學習方式；diphthong 則描述聲音會從一個口形滑到另一個口形，兩者有時會重疊。本階段集中學 oi/oy、ou/ow，以及 oo、aw 等特殊母音隊。',
+            goal: '分辨真正會滑動的 oi/oy、ou/ow，並認識 oo、aw 等需要整組記憶的特殊母音隊。',
             steps: [
                 {
                     number: '01',
@@ -474,22 +504,22 @@ const phonicsGuide = {
                 },
                 {
                     number: '02',
-                    title: '認識常見家族',
-                    text: 'oi/oy 常發 /ɔɪ/；ou/ow 常發 /aʊ/；oo 則要學會長音和短音兩個常見家族。',
+                    title: '先學真正的滑動家族',
+                    text: 'oi/oy 常發 /ɔɪ/；ou/ow 常發 /aʊ/。拼法中的兩個字母不代表要分開念兩次。',
                     tiles: [
                         { text: 'oi/oy', tone: 'vowel' },
                         { text: 'ou/ow', tone: 'vowel' },
-                        { text: 'oo', tone: 'vowel' }
+                        { text: '聲音會滑動', tone: 'sound' }
                     ]
                 },
                 {
                     number: '03',
-                    title: '把例外留給高階',
-                    text: 'ow、ou、oo 和 ea 都可能有不同讀法，先記住最穩定的例字家族，再逐步擴充。',
+                    title: '再收集特殊母音隊',
+                    text: 'oo 可能發 /uː/ 或 /ʊ/；aw/au 常發 /ɔː/。它們放在同一階段學習，但通常不是 diphthong。',
                     tiles: [
-                        { text: '穩定家族', tone: 'consonant' },
-                        { text: '→', tone: 'operator' },
-                        { text: '特殊讀法', tone: 'y-letter' }
+                        { text: 'oo', tone: 'vowel' },
+                        { text: 'aw/au', tone: 'vowel' },
+                        { text: '整組記憶', tone: 'y-letter' }
                     ]
                 }
             ],
@@ -497,15 +527,20 @@ const phonicsGuide = {
                 { word: 'coin', ipa: '/kɔɪn/', meaning: '硬幣', icon: '🪙', syllables: 'coin', focus: 'oi → /ɔɪ/', note: 'oi 是常見的滑動母音。' },
                 { word: 'toy', ipa: '/tɔɪ/', meaning: '玩具', icon: '🧸', syllables: 'toy', focus: 'oy → /ɔɪ/', note: 'oy 常出現在字尾，和 oi 聲音相同。' },
                 { word: 'cloud', ipa: '/klaʊd/', meaning: '雲', icon: '☁️', syllables: 'cloud', focus: 'ou → /aʊ/', note: 'ou 在 cloud 裡從 /a/ 滑向 /ʊ/。' },
-                { word: 'house', ipa: '/haʊs/', meaning: '房子', icon: '🏠', syllables: 'house', focus: 'ou → /aʊ/', note: 'ou 是常見的 /aʊ/ 拼法。' },
+                { word: 'saw', ipa: '/sɔː/', meaning: '看見（see 的過去式）／鋸子', icon: '🪚', syllables: 'saw', focus: 'aw → /ɔː/', note: 'aw 是特殊母音隊，通常不是滑動母音。' },
                 { word: 'moon', ipa: '/muːn/', meaning: '月亮', icon: '🌙', syllables: 'moon', focus: 'oo → /uː/', note: 'oo 有時發長 /uː/。' },
                 { word: 'book', ipa: '/bʊk/', meaning: '書', icon: '📖', syllables: 'book', focus: 'oo → /ʊ/', note: 'oo 也可能發較短的 /ʊ/。' }
             ],
+            watchOuts: [
+                { kind: 'variation', label: 'oo 有三個高頻家族', words: 'moon /uː/；book /ʊ/；blood /ʌ/', note: '前兩組最常先學；blood、flood 是需要另外記住的高頻例外。' },
+                { kind: 'variation', label: 'ou 不一定發 /aʊ/', words: 'cloud /aʊ/；soup /uː/；young /ʌ/；could /ʊ/', note: 'ou 是變化很多的拼法，應以字族累積，而不是只套一個音。' },
+                { kind: 'caution', label: 'aw/au 通常不是 diphthong', words: 'saw、draw、author、August', note: '它們和 oi、ou 放在同階段學，但聲音通常維持單一母音位置。' }
+            ],
             contrast: {
-                title: '滑動母音和固定長音',
-                text: 'oi、ou 會在口形中滑動；moon 和 book 則提醒我們 oo 有不同讀法。',
+                title: '先分辨滑動，再記特殊母音隊',
+                text: 'oi、ou 會在口形中滑動；aw 通常維持單一母音位置，而 oo 有兩個常見讀法。',
                 pairs: [
-                    { shortWord: 'coin', shortIpa: '/ɔɪ/', longWord: 'cone', longIpa: '/oʊ/', hint: 'oi 是滑動母音；o-e 是長 o' },
+                    { shortWord: 'coin', shortIpa: '/kɔɪn/', longWord: 'saw', longIpa: '/sɔː/', hint: 'oi 的聲音會滑動；aw 通常維持單一母音位置' },
                     { shortWord: 'moon', shortIpa: '/uː/', longWord: 'book', longIpa: '/ʊ/', hint: 'oo 的兩個常見讀法' }
                 ]
             },
@@ -571,6 +606,11 @@ const phonicsGuide = {
                 { word: 'table', ipa: '/ˈteɪ.bəl/', meaning: '桌子', icon: '🪑', syllables: 'ta-ble', focus: 'consonant-le', note: '字尾 -ble 形成一個常見的 consonant-le 音節。' },
                 { word: 'pencil', ipa: '/ˈpɛn.səl/', meaning: '鉛筆', icon: '✏️', syllables: 'pen-cil', focus: '弱母音', note: '第二音節的母音較輕，接近 schwa。' }
             ],
+            watchOuts: [
+                { kind: 'variation', label: '任何母音字母都可能弱化成 schwa', words: 'about（a）、pencil（i）、lemon（o）、support（u）', note: '非重讀音節裡的母音常變得模糊，不能再照單音節短母音硬讀。' },
+                { kind: 'caution', label: '切音節是試讀工具，不是只看字母切一刀', words: 'rabbit、robot、music', note: '先找聽得到的母音與重音，再用已知發音和意思確認切點。' },
+                { kind: 'variation', label: '字尾 /əl/ 有不同拼法', words: 'table（-le）、camel（-el）、pedal（-al）、pencil（-il）', note: '聲音接近，但拼字不同；拆音能幫讀音，正確拼字仍要連同字族記憶。' }
+            ],
             contrast: {
                 title: '長單字也能拆成小路段',
                 text: '先拆音節、分段讀，再把重音和意思放回整個單字。',
@@ -599,7 +639,7 @@ const phonicsGuide = {
             theme: 'rose',
             image: 'assets/guide/stage-10-advanced.png',
             imageAlt: '石頭偵探、城堡圖書櫃、害羞隱形字母、騎士、禮物、燈泡與手機插圖',
-            intro: '最後的密室裡有 Silent Letters、Soft C/G 和特殊 gh、ch。先使用熟悉的工具，再把高頻例外收進記憶庫。',
+            intro: '最後的密室裡有 Silent Letters、Soft C/G 和特殊 gh、ch，也會用 budget 練習不能硬套字尾 -dge 的特殊拼法。先使用熟悉的工具，再把高頻例外收進記憶庫。',
             goal: '知道哪些是可套用的拼字模式，哪些需要用高頻字家族記憶。',
             steps: [
                 {
@@ -642,7 +682,13 @@ const phonicsGuide = {
                 { word: 'write', ipa: '/raɪt/', meaning: '寫', icon: '✍️', syllables: 'write', focus: 'wr → /r/', note: 'w 在 wr- 中通常不另外發音。' },
                 { word: 'light', ipa: '/laɪt/', meaning: '光／輕的', icon: '💡', syllables: 'light', focus: 'igh → /aɪ/', note: 'gh 在 igh 中不另外發音。' },
                 { word: 'phone', ipa: '/foʊn/', meaning: '電話', icon: '📱', syllables: 'phone', focus: 'ph → /f/', note: 'ph 是常見的 /f/ 拼法。' },
-                { word: 'city', ipa: '/ˈsɪt.i/', meaning: '城市', icon: '🏙️', syllables: 'cit-y', focus: 'c → /s/', note: 'c 遇到 i 時常變成 Soft C。' }
+                { word: 'city', ipa: '/ˈsɪt.i/', meaning: '城市', icon: '🏙️', syllables: 'cit-y', focus: 'c → /s/', note: 'c 遇到 i 時常變成 Soft C。' },
+                { word: 'budget', ipa: '/ˈbʌdʒ.ɪt/', meaning: '預算', icon: '💰', syllables: 'bud-get', focus: 'dg → /dʒ/', note: '這裡不是字尾 -dge：dg 對應 /dʒ/，e → /ɪ/，形成第二音節 /ɪt/。' }
+            ],
+            watchOuts: [
+                { kind: 'exception', label: 'Soft G 有常見反例', words: 'get、give、girl、gift', note: 'g 後面雖是 e、i 或 y，仍發硬音 /g/；Soft G 是常見方向，不是絕對規則。' },
+                { kind: 'variation', label: 'gh 的讀法依字族改變', words: 'light（不發音）、laugh /f/、ghost /g/', note: '不能把 gh 永遠當成 silent letters；先辨認它屬於哪個高頻字族。' },
+                { kind: 'caution', label: 'budget 不是字尾 -dge', words: 'budget /ˈbʌdʒ.ɪt/；badge /bædʒ/', note: 'budget 中 dg 對應 /dʒ/，後面的 e 屬第二音節；badge 才是字尾 dge 拼字隊。' }
             ],
             contrast: {
                 title: '可以套用的線索，和需要記住的例外',
@@ -795,8 +841,13 @@ const phonicsGuide = {
                 { word: 'cat', ipa: '/kæt/', meaning: '貓', icon: '🐱', syllables: 'c-a-t', focus: 'a → /æ/', note: 'a 被 c 和 t 關住，發短音 /æ/。' },
                 { word: 'bed', ipa: '/bɛd/', meaning: '床', icon: '🛏️', syllables: 'b-e-d', focus: 'e → /ɛ/', note: 'e 被 b 和 d 關住，發短音 /ɛ/。' },
                 { word: 'pig', ipa: '/pɪɡ/', meaning: '豬', icon: '🐷', syllables: 'p-i-g', focus: 'i → /ɪ/', note: 'i 被 p 和 g 關住，發短音 /ɪ/。' },
-                { word: 'dog', ipa: '/dɑɡ/', meaning: '狗', icon: '🐶', syllables: 'd-o-g', focus: 'o → /ɑ/', note: 'o 被 d 和 g 關住，發短音。' },
+                { word: 'dog', ipa: '/dɑɡ/', meaning: '狗', icon: '🐶', syllables: 'd-o-g', focus: 'o → /ɑ/（美式）', note: 'dog 仍是 CVC；不同美式口音也可能接近 /dɔɡ/，不是 g 單獨把 o 變音。' },
                 { word: 'sun', ipa: '/sʌn/', meaning: '太陽', icon: '☀️', syllables: 's-u-n', focus: 'u → /ʌ/', note: 'u 被 s 和 n 關住，發短音 /ʌ/。' }
+            ],
+            watchOuts: [
+                { kind: 'accent', label: 'dog 的 o 是口音差異，不是 -og 新規則', words: 'dog、fog、log、hog', note: '本課採廣義美式 /ɑ/；有些說話者的 dog 接近 /ɔ/。這不是 g 造成的固定變音，仍歸在短母音與閉音節。' },
+                { kind: 'exception', label: '字母 u 不一定發 /ʌ/', words: 'put、push、pull、full、bush', note: '這組常見字的 u 多發 /ʊ/，要以字族一起記，不要硬套 sun 的 /ʌ/。' },
+                { kind: 'variation', label: 'w 後面的 a 常改變聲音', words: 'was、want、wash、watch', note: 'a 在 w 後常不發 cat 的 /æ/；實際母音會隨單字和口音不同。' }
             ],
             contrast: {
                 title: '短母音和長母音對照',
@@ -877,10 +928,15 @@ const phonicsGuide = {
             ],
             examples: [
                 { word: 'yes', ipa: '/jɛs/', meaning: '是', icon: '👍', syllables: 'yes', focus: 'y → /j/', note: '字首的 y 是子音，不是母音。' },
-                { word: 'my', ipa: '/maɪ/', meaning: '我的', icon: '🪁', syllables: 'my', focus: 'y → /aɪ/', note: '單音節字尾的 y 常發長 i。' },
+                { word: 'my', ipa: '/maɪ/', meaning: '我的', icon: '🙋', syllables: 'my', focus: 'y → /aɪ/', note: '單音節字尾的 y 常發長 i。' },
                 { word: 'happy', ipa: '/ˈhæp.i/', meaning: '開心的', icon: '😊', syllables: 'hap-py', focus: 'y → /i/', note: '多音節字尾的 y 常發長 e。' },
                 { word: 'gym', ipa: '/dʒɪm/', meaning: '體育館', icon: '🏋️', syllables: 'gym', focus: 'y → /ɪ/', note: 'y 被前後子音包住，常發短 i。' },
                 { word: 'sky', ipa: '/skaɪ/', meaning: '天空', icon: '🌤️', syllables: 'sky', focus: 'y → /aɪ/', note: '單音節字尾 y 常發 /aɪ/。' }
+            ],
+            watchOuts: [
+                { kind: 'position', label: '字首 y 通常是子音', words: 'yes、yellow、yard', note: '這裡的 y 發 /j/；「三種母音讀法」只適用於 y 擔任母音時。' },
+                { kind: 'variation', label: '字尾 y 要先看音節數', words: 'my、cry、sky → /aɪ/；happy、baby、sunny → /i/', note: '單音節字尾常發 /aɪ/；多音節非重讀字尾常發 /i/。' },
+                { kind: 'caution', label: 'y 也可能是母音隊的一部分', words: 'boy、toy（oy）；play、day（ay）；they、key（ey）', note: '此時要把 ay、oy、ey 整組判讀，不能只看 y 一個字母。' }
             ],
             contrast: {
                 title: 'Y 的三種母音角色',
@@ -924,7 +980,7 @@ const phonicsGuide = {
             explanation: '後面的子音像一道門把母音關住，因此母音多半使用短音。CVC 是孩子最適合先練習的基本結構。',
             examples: [
                 { word: 'cat', ipa: '/kæt/', meaning: '貓', syllables: 'cat', breakdown: 'c-a-t → a 被子音包住，發短音 /æ/' },
-                { word: 'mitten', ipa: '/ˈmɪt.ən/', meaning: '連指手套', syllables: 'mit-ten', breakdown: '兩個閉音節，i、e 都發短音' },
+                { word: 'mitten', ipa: '/ˈmɪt.ən/', meaning: '連指手套', syllables: 'mit-ten', breakdown: '第一音節 mit 是閉音節，i 發 /ɪ/；第二音節不重讀，e 弱化成 /ə/' },
                 { word: 'bad', ipa: '/bæd/', meaning: '壞的', syllables: 'bad', breakdown: 'b-a-d → a 發短音 /æ/' }
             ]
         },
@@ -963,7 +1019,7 @@ const phonicsGuide = {
             examples: [
                 { word: 'knee', ipa: '/niː/', meaning: '膝蓋', syllables: 'knee', breakdown: 'kn → /n/；k 不另外發音' },
                 { word: 'knife', ipa: '/naɪf/', meaning: '餐刀', syllables: 'knife', breakdown: 'kn → /n/，i-e 讓 i 發 /aɪ/' },
-                { word: 'knock', ipa: '/nɑːk/', meaning: '敲', syllables: 'knock', breakdown: 'kn → /n/' },
+                { word: 'knock', ipa: '/nɑk/', meaning: '敲', syllables: 'knock', breakdown: 'kn → /n/' },
                 { word: 'knight', ipa: '/naɪt/', meaning: '騎士', syllables: 'knight', breakdown: 'kn → /n/，igh → /aɪ/' }
             ]
         },
@@ -1059,9 +1115,9 @@ const phonicsGuide = {
             summary: '母音遇到 r 後，r 會改變母音的聲音。',
             explanation: '這一組不適合再用短母音或長母音硬套；先把 ar、or、er、ir、ur 當作受 r 影響的母音家族。',
             examples: [
-                { word: 'car', ipa: '/kɑːr/', meaning: '汽車', syllables: 'car', breakdown: 'ar → /ɑːr/' },
-                { word: 'fork', ipa: '/fɔːrk/', meaning: '叉子', syllables: 'fork', breakdown: 'or → /ɔːr/' },
-                { word: 'bird', ipa: '/bɝːd/', meaning: '鳥', syllables: 'bird', breakdown: 'ir → /ɝː/' }
+                { word: 'car', ipa: '/kɑr/', meaning: '汽車', syllables: 'car', breakdown: 'ar → /ɑr/' },
+                { word: 'fork', ipa: '/fɔrk/', meaning: '叉子', syllables: 'fork', breakdown: 'or → /ɔr/' },
+                { word: 'bird', ipa: '/bɝd/', meaning: '鳥', syllables: 'bird', breakdown: 'ir → /ɝ/' }
             ]
         },
         {
@@ -1084,12 +1140,11 @@ const phonicsGuide = {
             summary: '看到 dge 時，把它當成一個拼字隊，整組表示 /dʒ/。',
             explanation: '這不是「Silent D」單獨規則：d、g、e 合在一起形成 dge。d 不單獨發音，字尾 e 也不另外唸出；在短母音後尤其常見。',
             examples: [
-                { word: 'budget', ipa: '/ˈbʌdʒ.ɪt/', meaning: '預算', syllables: 'budg-et', breakdown: 'budg → /bʌdʒ/；et → /ɪt/；dge 整組表示 /dʒ/' },
                 { word: 'badge', ipa: '/bædʒ/', meaning: '徽章', syllables: 'badge', breakdown: 'a 發短音 /æ/；dge → /dʒ/' },
                 { word: 'bridge', ipa: '/brɪdʒ/', meaning: '橋', syllables: 'bridge', breakdown: 'i 發短音 /ɪ/；dge → /dʒ/' },
                 { word: 'fridge', ipa: '/frɪdʒ/', meaning: '冰箱', syllables: 'fridge', breakdown: 'i 發短音 /ɪ/；dge → /dʒ/' },
                 { word: 'judge', ipa: '/dʒʌdʒ/', meaning: '法官／裁判', syllables: 'judge', breakdown: 'u 發短音 /ʌ/；字首 j 與字尾 dge 都有 /dʒ/' },
-                { word: 'edge', ipa: '/edʒ/', meaning: '邊緣', syllables: 'edge', breakdown: 'e 發短音 /ɛ/；dge → /dʒ/' }
+                { word: 'edge', ipa: '/ɛdʒ/', meaning: '邊緣', syllables: 'edge', breakdown: 'e 發短音 /ɛ/；dge → /dʒ/' }
             ]
         },
         {
@@ -1102,7 +1157,7 @@ const phonicsGuide = {
                 { word: 'match', ipa: '/mætʃ/', meaning: '比賽／火柴', syllables: 'match', breakdown: 'a 發短音 /æ/；tch → /tʃ/' },
                 { word: 'fetch', ipa: '/fɛtʃ/', meaning: '取回', syllables: 'fetch', breakdown: 'e 發短音 /ɛ/；tch → /tʃ/' },
                 { word: 'pitch', ipa: '/pɪtʃ/', meaning: '音高／投球', syllables: 'pitch', breakdown: 'i 發短音 /ɪ/；tch → /tʃ/' },
-                { word: 'notch', ipa: '/nɑːtʃ/', meaning: '缺口', syllables: 'notch', breakdown: 'o 發短音；tch → /tʃ/' }
+                { word: 'notch', ipa: '/nɑtʃ/', meaning: '缺口', syllables: 'notch', breakdown: 'o 發短音；tch → /tʃ/' }
             ]
         },
         {
@@ -1115,7 +1170,7 @@ const phonicsGuide = {
                 { word: 'back', ipa: '/bæk/', meaning: '背部／回到', syllables: 'back', breakdown: 'a 發短音 /æ/；ck → /k/' },
                 { word: 'neck', ipa: '/nɛk/', meaning: '脖子', syllables: 'neck', breakdown: 'e 發短音 /ɛ/；ck → /k/' },
                 { word: 'sick', ipa: '/sɪk/', meaning: '生病的', syllables: 'sick', breakdown: 'i 發短音 /ɪ/；ck → /k/' },
-                { word: 'rock', ipa: '/rɑːk/', meaning: '岩石', syllables: 'rock', breakdown: 'o 發短音；ck → /k/' }
+                { word: 'rock', ipa: '/rɑk/', meaning: '岩石', syllables: 'rock', breakdown: 'o 發短音；ck → /k/' }
             ]
         },
         {
